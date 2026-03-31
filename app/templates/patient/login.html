@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
+<meta name="theme-color" content="#1a6fc4"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<title>Patient Login — MediCore HMS</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--blue:#1a6fc4;--blue-dark:#155fa0;--blue-light:#e8f1fb;--teal:#0f9e75;--teal-light:#e1f5ee;--red:#dc2626;--red-light:#fef2f2;--border:#e5e7eb;--bg:#f0f4f8;--white:#fff;--text:#1e293b;--text-sm:#64748b;--text-xs:#94a3b8}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);min-height:100vh;display:flex;flex-direction:column}
+
+/* Header */
+.header{background:var(--blue);padding:40px 24px 60px;text-align:center;position:relative;overflow:hidden}
+.header::after{content:'';position:absolute;bottom:-30px;left:0;right:0;height:60px;background:var(--bg);border-radius:50% 50% 0 0}
+.header-icon{width:60px;height:60px;background:rgba(255,255,255,.2);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;backdrop-filter:blur(10px)}
+.header-icon svg{width:30px;height:30px;fill:white}
+.header h1{font-size:22px;font-weight:700;color:#fff;letter-spacing:-.3px}
+.header p{font-size:13px;color:rgba(255,255,255,.75);margin-top:4px}
+
+/* Card */
+.card{background:var(--white);border-radius:20px;margin:0 16px;padding:24px;box-shadow:0 4px 24px rgba(0,0,0,.08);position:relative;z-index:1;margin-top:-10px}
+
+/* Tabs */
+.tabs{display:flex;background:var(--bg);border-radius:10px;padding:3px;margin-bottom:20px}
+.tab{flex:1;padding:9px;text-align:center;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;color:var(--text-sm);transition:all .2s}
+.tab.active{background:var(--white);color:var(--blue);box-shadow:0 1px 4px rgba(0,0,0,.1)}
+
+/* Forms */
+.form-group{margin-bottom:16px;position:relative}
+.form-group label{display:block;font-size:12px;font-weight:600;color:var(--text-sm);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em}
+.input-wrap{position:relative;display:flex;align-items:center}
+.input-wrap svg{position:absolute;left:14px;width:18px;height:18px;color:var(--text-xs)}
+input{width:100%;padding:14px 14px 14px 44px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;color:var(--text);background:var(--white);outline:none;transition:border-color .2s;-webkit-appearance:none}
+input:focus{border-color:var(--blue)}
+input.error{border-color:var(--red)}
+.eye-btn{position:absolute;right:14px;background:none;border:none;cursor:pointer;color:var(--text-xs);padding:4px}
+.eye-btn svg{width:18px;height:18px}
+
+/* Phone input */
+.phone-row{display:flex;gap:8px}
+.country-code{width:80px;flex-shrink:0;padding:14px 8px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;color:var(--text);background:var(--white);outline:none;text-align:center;font-weight:600}
+.phone-row input{flex:1}
+
+/* OTP inputs */
+.otp-row{display:flex;gap:10px;justify-content:center;margin:10px 0}
+.otp-input{width:46px;height:52px;border:1.5px solid var(--border);border-radius:10px;font-size:22px;font-weight:700;text-align:center;color:var(--text);background:var(--white);outline:none;-webkit-appearance:none}
+.otp-input:focus{border-color:var(--blue)}
+
+/* Buttons */
+.btn{width:100%;padding:15px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:.2px}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:var(--blue-dark)}
+.btn-primary:active{transform:scale(.98)}
+.btn-primary:disabled{background:#93b4d8}
+.btn-outline{background:none;border:1.5px solid var(--border);color:var(--text-sm);margin-top:10px}
+.btn-outline:active{background:var(--bg)}
+.btn-google{background:#fff;border:1.5px solid var(--border);color:var(--text);margin-top:10px}
+.btn-sm{padding:10px;font-size:13px;border-radius:8px}
+
+/* Alert */
+.alert{padding:12px 14px;border-radius:10px;font-size:13px;margin-bottom:14px;display:none;align-items:flex-start;gap:8px}
+.alert.show{display:flex}
+.alert-error{background:var(--red-light);color:var(--red)}
+.alert-success{background:var(--teal-light);color:var(--teal)}
+
+/* Divider */
+.divider{display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--text-xs);font-size:12px}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* Links */
+.link{color:var(--blue);cursor:pointer;font-size:13px;text-decoration:none}
+.link:hover{text-decoration:underline}
+.forgot-row{text-align:right;margin-top:-8px;margin-bottom:14px}
+
+/* Footer */
+.footer{text-align:center;padding:20px;font-size:12px;color:var(--text-xs)}
+.footer a{color:var(--blue)}
+
+/* Screens */
+.screen{display:none}.screen.active{display:block;animation:fadeUp .25s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+/* Spinner */
+.spinner{width:20px;height:20px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* OTP info */
+.otp-info{text-align:center;font-size:13px;color:var(--text-sm);margin-bottom:14px}
+.otp-info strong{color:var(--text);display:block;font-size:15px;margin-bottom:4px}
+
+/* Registration steps */
+.step-indicator{display:flex;justify-content:center;gap:6px;margin-bottom:20px}
+.step-dot{width:8px;height:8px;border-radius:50%;background:var(--border)}
+.step-dot.active{background:var(--blue);width:20px;border-radius:4px}
+.step-dot.done{background:var(--teal)}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">
+    <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2zm1 14h-2v-4H8l4-7 4 7h-3v4z"/></svg>
+  </div>
+  <h1>MediCore HMS</h1>
+  <p>Your Health, Our Priority</p>
+</div>
+
+<div class="card">
+
+  <!-- LOGIN SCREEN -->
+  <div class="screen active" id="screen-login">
+    <div class="tabs" id="login-tabs">
+      <div class="tab active" onclick="switchLoginTab('email')">Email</div>
+      <div class="tab" onclick="switchLoginTab('phone')">Phone</div>
+    </div>
+
+    <div id="alert-login" class="alert alert-error">
+      <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+      <span id="alert-login-msg"></span>
+    </div>
+
+    <!-- Email login -->
+    <div id="login-email-form">
+      <div class="form-group">
+        <label>Email Address</label>
+        <div class="input-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          <input type="email" id="login-email" placeholder="your@email.com" autocomplete="email"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div class="input-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+          <input type="password" id="login-password" placeholder="Enter password" autocomplete="current-password"/>
+          <button class="eye-btn" onclick="togglePwd('login-password')" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="forgot-row">
+        <a class="link" onclick="showScreen('screen-forgot')">Forgot password?</a>
+      </div>
+      <button class="btn btn-primary" onclick="loginWithEmail()" id="btn-login-email">Sign In</button>
+    </div>
+
+    <!-- Phone login -->
+    <div id="login-phone-form" style="display:none">
+      <div class="form-group">
+        <label>Phone Number</label>
+        <div class="input-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.68A2 2 0 012 0h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14z"/></svg>
+          <input type="tel" id="login-phone" placeholder="+91 9876543210" autocomplete="tel"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div class="input-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+          <input type="password" id="login-phone-password" placeholder="Enter password" autocomplete="current-password"/>
+          <button class="eye-btn" onclick="togglePwd('login-phone-password')" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="forgot-row">
+        <a class="link" onclick="showScreen('screen-forgot')">Forgot password?</a>
+      </div>
+      <button class="btn btn-primary" onclick="loginWithPhone()" id="btn-login-phone">Sign In</button>
+    </div>
+
+    <div class="divider">or</div>
+    <button class="btn btn-outline" onclick="showScreen('screen-register')">
+      Create New Account
+    </button>
+  </div>
+
+  <!-- REGISTER SCREEN -->
+  <div class="screen" id="screen-register">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <button onclick="showScreen('screen-login')" style="background:none;border:none;cursor:pointer;color:var(--text-sm)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      </button>
+      <div style="font-size:16px;font-weight:600">Create Account</div>
+    </div>
+
+    <div id="alert-register" class="alert alert-error">
+      <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+      <span id="alert-register-msg"></span>
+    </div>
+
+    <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-group">
+        <label>First Name *</label>
+        <div class="input-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <input type="text" id="reg-fname" placeholder="First" autocomplete="given-name"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Last Name *</label>
+        <div class="input-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <input type="text" id="reg-lname" placeholder="Last" autocomplete="family-name"/>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Phone Number *</label>
+      <div class="input-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2A19.79 19.79 0 0111.19 18.9 19.5 19.5 0 015.1 12.8a19.79 19.79 0 01-3.07-8.67A2 2 0 014 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14z"/></svg>
+        <input type="tel" id="reg-phone" placeholder="+91 9876543210" autocomplete="tel"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Email Address *</label>
+      <div class="input-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <input type="email" id="reg-email" placeholder="your@email.com" autocomplete="email"/>
+      </div>
+    </div>
+    <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-group">
+        <label>Gender *</label>
+        <div class="input-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M2 20c0-4 4-7 10-7s10 3 10 7"/></svg>
+          <select id="reg-gender" style="width:100%;padding:14px 14px 14px 44px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;color:var(--text);background:var(--white);outline:none;-webkit-appearance:none">
+            <option value="">Select</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Blood Group</label>
+        <div class="input-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <select id="reg-blood" style="width:100%;padding:14px 14px 14px 44px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;color:var(--text);background:var(--white);outline:none;-webkit-appearance:none">
+            <option value="unknown">Unknown</option>
+            <option value="A+">A+</option><option value="A-">A-</option>
+            <option value="B+">B+</option><option value="B-">B-</option>
+            <option value="O+">O+</option><option value="O-">O-</option>
+            <option value="AB+">AB+</option><option value="AB-">AB-</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Date of Birth</label>
+      <div class="input-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <input type="date" id="reg-dob" style="padding-left:44px"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Password *</label>
+      <div class="input-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        <input type="password" id="reg-pwd" placeholder="Min 6 characters"/>
+        <button class="eye-btn" onclick="togglePwd('reg-pwd')" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Confirm Password *</label>
+      <div class="input-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        <input type="password" id="reg-pwd2" placeholder="Repeat password"/>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="register()" id="btn-register">Create Account</button>
+    <div style="text-align:center;margin-top:14px;font-size:13px;color:var(--text-sm)">
+      Already have an account? <a class="link" onclick="showScreen('screen-login')">Sign In</a>
+    </div>
+  </div>
+
+  <!-- OTP SCREEN -->
+  <div class="screen" id="screen-otp">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <button onclick="showScreen('screen-login')" style="background:none;border:none;cursor:pointer;color:var(--text-sm)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      </button>
+      <div style="font-size:16px;font-weight:600">Verify Account</div>
+    </div>
+    <div class="otp-info">
+      <strong id="otp-sent-to">Verification code sent</strong>
+      Enter the 6-digit code sent to your email
+    </div>
+    <div id="alert-otp" class="alert alert-error">
+      <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+      <span id="alert-otp-msg"></span>
+    </div>
+    <div class="otp-row">
+      <input class="otp-input" type="tel" maxlength="1" id="otp1" oninput="otpNext(this,'otp2')"/>
+      <input class="otp-input" type="tel" maxlength="1" id="otp2" oninput="otpNext(this,'otp3')" onkeydown="otpBack(event,'otp1')"/>
+      <input class="otp-input" type="tel" maxlength="1" id="otp3" oninput="otpNext(this,'otp4')" onkeydown="otpBack(event,'otp2')"/>
+      <input class="otp-input" type="tel" maxlength="1" id="otp4" oninput="otpNext(this,'otp5')" onkeydown="otpBack(event,'otp3')"/>
+      <input class="otp-input" type="tel" maxlength="1" id="otp5" oninput="otpNext(this,'otp6')" onkeydown="otpBack(event,'otp4')"/>
+      <input class="otp-input" type="tel" maxlength="1" id="otp6" onkeydown="otpBack(event,'otp5')"/>
+    </div>
+    <button class="btn btn-primary" onclick="verifyOtp()" id="btn-verify" style="margin-top:10px">Verify & Continue</button>
+    <div style="text-align:center;margin-top:14px;font-size:13px;color:var(--text-sm)">
+      Didn't receive it? <a class="link" onclick="resendOtp()" id="resend-link">Resend OTP</a>
+      <span id="resend-timer" style="color:var(--text-xs)"></span>
+    </div>
+  </div>
+
+  <!-- FORGOT PASSWORD SCREEN -->
+  <div class="screen" id="screen-forgot">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <button onclick="showScreen('screen-login')" style="background:none;border:none;cursor:pointer;color:var(--text-sm)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      </button>
+      <div style="font-size:16px;font-weight:600">Reset Password</div>
+    </div>
+    <div style="font-size:13px;color:var(--text-sm);margin-bottom:16px">Enter your registered email or phone. We'll send you a verification code.</div>
+    <div id="alert-forgot" class="alert alert-error">
+      <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+      <span id="alert-forgot-msg"></span>
+    </div>
+    <div class="form-group">
+      <label>Email or Phone</label>
+      <div class="input-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <input type="text" id="forgot-identifier" placeholder="email@example.com or phone"/>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="sendForgotOtp()">Send Reset Code</button>
+  </div>
+
+  <!-- RESET PASSWORD SCREEN -->
+  <div class="screen" id="screen-reset">
+    <div style="font-size:16px;font-weight:600;margin-bottom:16px">Set New Password</div>
+    <div id="alert-reset" class="alert alert-error">
+      <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+      <span id="alert-reset-msg"></span>
+    </div>
+    <div class="form-group">
+      <label>New Password</label>
+      <div class="input-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        <input type="password" id="reset-pwd" placeholder="Min 6 characters"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Confirm Password</label>
+      <div class="input-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        <input type="password" id="reset-pwd2" placeholder="Repeat password"/>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="resetPassword()">Reset Password</button>
+  </div>
+
+</div>
+
+<div class="footer">
+  &copy; 2024 MediCore HMS &bull; <a href="#">Privacy Policy</a> &bull; <a href="#">Help</a>
+</div>
+
+<script>
+let currentOtpIdentifier = '';
+let otpPurpose = 'verify';
+let resendInterval;
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function switchLoginTab(type) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('login-email-form').style.display = type === 'email' ? 'block' : 'none';
+  document.getElementById('login-phone-form').style.display = type === 'phone' ? 'block' : 'none';
+}
+
+function togglePwd(id) {
+  const inp = document.getElementById(id);
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+function showAlert(alertId, msgId, msg, type = 'error') {
+  const el  = document.getElementById(alertId);
+  const msg_el = document.getElementById(msgId);
+  msg_el.textContent = msg;
+  el.className = `alert alert-${type} show`;
+}
+
+function hideAlert(alertId) {
+  document.getElementById(alertId).classList.remove('show');
+}
+
+async function loginWithEmail() {
+  const email = document.getElementById('login-email').value.trim();
+  const pwd   = document.getElementById('login-password').value;
+  hideAlert('alert-login');
+  if (!email || !pwd) { showAlert('alert-login','alert-login-msg','Enter email and password'); return; }
+  await doLogin(email, pwd, 'btn-login-email');
+}
+
+async function loginWithPhone() {
+  const phone = document.getElementById('login-phone').value.trim();
+  const pwd   = document.getElementById('login-phone-password').value;
+  hideAlert('alert-login');
+  if (!phone || !pwd) { showAlert('alert-login','alert-login-msg','Enter phone and password'); return; }
+  await doLogin(phone, pwd, 'btn-login-phone');
+}
+
+async function doLogin(identifier, password, btnId) {
+  const btn = document.getElementById(btnId);
+  btn.innerHTML = '<div class="spinner"></div>';
+  btn.disabled  = true;
+  try {
+    const r = await fetch('/patient/api/login', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({identifier, password})
+    });
+    const d = await r.json();
+    if (d.success) {
+      btn.innerHTML = '✓ Redirecting...';
+      window.location.href = d.redirect || '/patient/app';
+    } else {
+      showAlert('alert-login','alert-login-msg', d.message || 'Login failed');
+      btn.innerHTML = 'Sign In'; btn.disabled = false;
+    }
+  } catch(e) {
+    showAlert('alert-login','alert-login-msg','Network error. Please try again.');
+    btn.innerHTML = 'Sign In'; btn.disabled = false;
+  }
+}
+
+async function register() {
+  const fname = document.getElementById('reg-fname').value.trim();
+  const lname = document.getElementById('reg-lname').value.trim();
+  const phone = document.getElementById('reg-phone').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const gender= document.getElementById('reg-gender').value;
+  const pwd   = document.getElementById('reg-pwd').value;
+  const pwd2  = document.getElementById('reg-pwd2').value;
+  hideAlert('alert-register');
+  if (!fname||!lname||!phone||!email||!gender||!pwd) {
+    showAlert('alert-register','alert-register-msg','Please fill in all required fields'); return;
+  }
+  if (pwd.length < 6) { showAlert('alert-register','alert-register-msg','Password must be at least 6 characters'); return; }
+  if (pwd !== pwd2)   { showAlert('alert-register','alert-register-msg','Passwords do not match'); return; }
+
+  const btn = document.getElementById('btn-register');
+  btn.innerHTML = '<div class="spinner"></div> Creating account...';
+  btn.disabled  = true;
+  try {
+    const r = await fetch('/patient/api/register', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        first_name: fname, last_name: lname, phone, email, gender,
+        password: pwd,
+        blood_group: document.getElementById('reg-blood').value,
+        date_of_birth: document.getElementById('reg-dob').value,
+      })
+    });
+    const d = await r.json();
+    if (d.success) {
+      currentOtpIdentifier = email;
+      otpPurpose = 'verify';
+      document.getElementById('otp-sent-to').textContent = `Code sent to ${email}`;
+      showScreen('screen-otp');
+      startResendTimer();
+    } else {
+      showAlert('alert-register','alert-register-msg', d.message || 'Registration failed');
+    }
+  } catch(e) {
+    showAlert('alert-register','alert-register-msg','Network error. Please try again.');
+  }
+  btn.innerHTML = 'Create Account'; btn.disabled = false;
+}
+
+function otpNext(el, nextId) {
+  if (el.value && nextId) document.getElementById(nextId)?.focus();
+  if (getOtpValue().length === 6) verifyOtp();
+}
+function otpBack(e, prevId) {
+  if (e.key === 'Backspace' && !e.target.value) document.getElementById(prevId)?.focus();
+}
+function getOtpValue() {
+  return ['otp1','otp2','otp3','otp4','otp5','otp6'].map(id =>
+    document.getElementById(id).value).join('');
+}
+function clearOtp() {
+  ['otp1','otp2','otp3','otp4','otp5','otp6'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('otp1').focus();
+}
+
+async function verifyOtp() {
+  const otp = getOtpValue();
+  if (otp.length !== 6) { showAlert('alert-otp','alert-otp-msg','Enter all 6 digits'); return; }
+  const btn = document.getElementById('btn-verify');
+  btn.innerHTML = '<div class="spinner"></div>';
+  btn.disabled  = true;
+  try {
+    const r = await fetch('/patient/api/verify-otp', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({identifier: currentOtpIdentifier, otp, purpose: otpPurpose})
+    });
+    const d = await r.json();
+    if (d.success) {
+      if (d.redirect) {
+        window.location.href = d.redirect;
+      } else if (d.can_reset) {
+        showScreen('screen-reset');
+      }
+    } else {
+      showAlert('alert-otp','alert-otp-msg', d.message || 'Invalid OTP');
+      clearOtp();
+    }
+  } catch(e) {
+    showAlert('alert-otp','alert-otp-msg','Network error');
+  }
+  btn.innerHTML = 'Verify & Continue'; btn.disabled = false;
+}
+
+async function resendOtp() {
+  if (document.getElementById('resend-link').style.pointerEvents === 'none') return;
+  await fetch('/patient/api/send-otp', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({identifier: currentOtpIdentifier, channel: 'email'})
+  });
+  clearOtp();
+  startResendTimer();
+  showAlert('alert-otp','alert-otp-msg','New OTP sent!','success');
+  setTimeout(() => document.getElementById('alert-otp').classList.remove('show'), 3000);
+}
+
+function startResendTimer(seconds = 60) {
+  const link  = document.getElementById('resend-link');
+  const timer = document.getElementById('resend-timer');
+  link.style.pointerEvents = 'none';
+  link.style.color = 'var(--text-xs)';
+  clearInterval(resendInterval);
+  let remaining = seconds;
+  resendInterval = setInterval(() => {
+    timer.textContent = ` (${remaining}s)`;
+    remaining--;
+    if (remaining < 0) {
+      clearInterval(resendInterval);
+      timer.textContent = '';
+      link.style.pointerEvents = '';
+      link.style.color = '';
+    }
+  }, 1000);
+}
+
+async function sendForgotOtp() {
+  const identifier = document.getElementById('forgot-identifier').value.trim();
+  hideAlert('alert-forgot');
+  if (!identifier) { showAlert('alert-forgot','alert-forgot-msg','Enter your email or phone'); return; }
+  try {
+    const r = await fetch('/patient/api/send-otp', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({identifier, channel: 'email'})
+    });
+    const d = await r.json();
+    currentOtpIdentifier = identifier;
+    otpPurpose = 'reset';
+    document.getElementById('otp-sent-to').textContent = `Reset code sent to ${identifier}`;
+    showScreen('screen-otp');
+    startResendTimer();
+  } catch(e) {
+    showAlert('alert-forgot','alert-forgot-msg','Network error');
+  }
+}
+
+async function resetPassword() {
+  const pwd  = document.getElementById('reset-pwd').value;
+  const pwd2 = document.getElementById('reset-pwd2').value;
+  hideAlert('alert-reset');
+  if (pwd.length < 6) { showAlert('alert-reset','alert-reset-msg','Min 6 characters'); return; }
+  if (pwd !== pwd2)   { showAlert('alert-reset','alert-reset-msg','Passwords do not match'); return; }
+  try {
+    const r = await fetch('/patient/api/reset-password', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({password: pwd, confirm_password: pwd2})
+    });
+    const d = await r.json();
+    if (d.success) {
+      showAlert('alert-reset','alert-reset-msg', d.message, 'success');
+      setTimeout(() => showScreen('screen-login'), 2000);
+    } else {
+      showAlert('alert-reset','alert-reset-msg', d.message || 'Failed');
+    }
+  } catch(e) {
+    showAlert('alert-reset','alert-reset-msg','Network error');
+  }
+}
+</script>
+</body>
+</html>

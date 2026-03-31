@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Pharmacy — MediCore HMS</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue:#1a6fc4;--blue-light:#e8f1fb;--blue-dark:#155fa0;
+  --teal:#0f9e75;--teal-light:#e1f5ee;
+  --amber:#b45309;--amber-light:#fef3c7;
+  --red:#dc2626;--red-light:#fef2f2;
+  --green:#15803d;--green-light:#f0fdf4;
+  --orange:#ea580c;--orange-light:#fff7ed;
+  --gray:#6b7280;--border:#e5e7eb;
+  --sidebar-w:220px;--bg:#f1f5f9;--white:#fff;
+  --text:#1e293b;--text-sm:#64748b;--text-xs:#94a3b8;--radius:10px;
+}
+[data-theme=dark]{--bg:#0f172a;--white:#1e293b;--text:#f1f5f9;--text-sm:#94a3b8;--text-xs:#64748b;--border:#334155;--blue-light:#1e3a5f;--teal-light:#0d3324;--amber-light:#451a03;--red-light:#450a0a;--green-light:#052e16;--orange-light:#431407}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
+#sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;overflow-y:auto}
+.sidebar-brand{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.brand-icon{width:32px;height:32px;background:var(--amber);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.brand-icon svg{width:16px;height:16px;fill:white}
+.brand-name{font-size:14px;font-weight:700}.brand-sub{font-size:10px;color:var(--text-xs)}
+.nav-section{font-size:10px;font-weight:600;color:var(--text-xs);text-transform:uppercase;letter-spacing:.08em;padding:12px 16px 4px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 12px;margin:1px 8px;border-radius:7px;cursor:pointer;font-size:13px;color:var(--text-sm);transition:all .15s;text-decoration:none}
+.nav-item:hover{background:var(--bg);color:var(--text)}
+.nav-item.active{background:var(--amber-light);color:var(--amber);font-weight:500}
+.nav-item svg{width:15px;height:15px;flex-shrink:0}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;border-radius:10px;padding:1px 6px;font-weight:600}
+.sidebar-footer{margin-top:auto;padding:12px;border-top:1px solid var(--border)}
+.user-card{display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;cursor:pointer}
+.user-card:hover{background:var(--bg)}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--amber);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;flex-shrink:0}
+.user-name{font-size:12px;font-weight:500}.user-role{font-size:10px;color:var(--text-xs)}
+#main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column}
+#topbar{background:var(--white);border-bottom:1px solid var(--border);height:54px;display:flex;align-items:center;padding:0 20px;gap:10px;position:sticky;top:0;z-index:50}
+.topbar-title{font-size:15px;font-weight:600;flex:1}
+.topbar-btn{width:32px;height:32px;border-radius:7px;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-sm)}
+.topbar-btn:hover{background:var(--bg)}.topbar-btn svg{width:17px;height:17px}
+.live-badge{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--teal);background:var(--teal-light);padding:4px 10px;border-radius:20px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+#content{padding:20px;flex:1}
+.page{display:none}.page.active{display:block;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.kpi{background:var(--white);border-radius:var(--radius);padding:14px 16px;border:1px solid var(--border)}
+.kpi-label{font-size:10px;font-weight:600;color:var(--text-xs);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.kpi-value{font-size:24px;font-weight:700;line-height:1}.kpi-sub{font-size:11px;color:var(--text-xs);margin-top:4px}
+.card{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;margin-bottom:16px}
+.card-hdr{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:13px;font-weight:600}.card-body{padding:16px}
+.two-col{display:grid;grid-template-columns:1fr 1.3fr;gap:16px}
+.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:500}
+.badge-blue{background:var(--blue-light);color:var(--blue)}.badge-teal{background:var(--teal-light);color:var(--teal)}
+.badge-amber{background:var(--amber-light);color:var(--amber)}.badge-red{background:var(--red-light);color:var(--red)}
+.badge-green{background:var(--green-light);color:var(--green)}.badge-orange{background:var(--orange-light);color:var(--orange)}
+.badge-gray{background:var(--bg);color:var(--gray)}
+.btn{padding:8px 14px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all .15s;display:inline-flex;align-items:center;gap:5px}
+.btn-primary{background:var(--blue);color:#fff}.btn-primary:hover{background:var(--blue-dark)}
+.btn-amber{background:var(--amber);color:#fff}.btn-teal{background:var(--teal);color:#fff}
+.btn-outline{background:none;border:1px solid var(--border);color:var(--text)}.btn-outline:hover{background:var(--bg)}
+.btn-sm{padding:5px 10px;font-size:11px}.btn-danger{background:var(--red);color:#fff}
+.form-group{margin-bottom:12px}
+.form-group label{display:block;font-size:11px;font-weight:500;color:var(--text-sm);margin-bottom:4px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;color:var(--text);background:var(--white);outline:none}
+.form-group input:focus,.form-group select:focus{border-color:var(--blue)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+table{width:100%;border-collapse:collapse}
+th{padding:9px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--text-xs);text-transform:uppercase;background:var(--bg);border-bottom:1px solid var(--border)}
+td{padding:10px 14px;font-size:13px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg)}
+.rx-card{border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px;transition:box-shadow .15s}
+.rx-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.rx-card.urgent{border-left:3px solid var(--red)}
+.rx-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px}
+.rx-no{font-size:12px;font-weight:600;font-family:monospace}
+.rx-patient{font-size:14px;font-weight:600}
+.rx-meta{font-size:11px;color:var(--text-xs);margin-top:2px}
+.rx-items{margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.rx-item{display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:6px}
+.rx-drug{font-weight:500;flex:1}
+.rx-dose{color:var(--text-xs)}
+.alert-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:7px;margin-bottom:8px;border-left:3px solid}
+.alert-item.danger{background:var(--red-light);border-color:var(--red)}
+.alert-item.warning{background:var(--amber-light);border-color:var(--amber)}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-bg.open{display:flex}
+.modal{background:var(--white);border-radius:14px;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;animation:mIn .2s ease}
+@keyframes mIn{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-hdr{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:14px;font-weight:600}
+.modal-close{background:none;border:none;cursor:pointer;color:var(--text-sm);font-size:16px;width:26px;height:26px;border-radius:5px}
+.modal-close:hover{background:var(--bg)}
+.modal-body{padding:18px}.modal-foot{padding:12px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+.search-wrap{position:relative}
+.search-wrap input{width:100%;padding:8px 10px 8px 32px;border:1px solid var(--border);border-radius:7px;font-size:13px;background:var(--white);color:var(--text);outline:none}
+.search-wrap input:focus{border-color:var(--blue)}
+.search-wrap svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--text-xs)}
+.divider{height:1px;background:var(--border);margin:12px 0}
+.empty{text-align:center;padding:32px;color:var(--text-xs);font-size:13px}
+.loading{text-align:center;padding:20px;color:var(--text-xs)}
+.fw{font-weight:500}.ml-auto{margin-left:auto}
+.success-msg{background:var(--teal-light);color:var(--teal);padding:10px 14px;border-radius:7px;font-size:12px;font-weight:500;margin-top:8px;display:none}
+.success-msg.show{display:block}
+</style>
+</head>
+<body>
+<div id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon"><svg viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v11m0 0l-3 3m3-3l3 3"/></svg></div>
+    <div><div class="brand-name">MediCore HMS</div><div class="brand-sub">Pharmacy</div></div>
+  </div>
+  <div class="nav-section">Dispensing</div>
+  <a class="nav-item active" onclick="showPage('queue')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+    Prescription Queue <span class="nav-badge" id="pending-badge">0</span>
+  </a>
+  <a class="nav-item" onclick="showPage('dispensed')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    Dispensed Today
+  </a>
+  <div class="nav-section">Inventory</div>
+  <a class="nav-item" onclick="showPage('inventory')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
+    Drug Inventory
+  </a>
+  <a class="nav-item" onclick="showPage('alerts')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    Stock Alerts
+  </a>
+  <a class="nav-item" onclick="showPage('add-drug')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Add Drug
+  </a>
+  <div class="sidebar-footer">
+    <div class="user-card" onclick="window.location='/auth/logout'">
+      <div class="avatar">PH</div>
+      <div><div class="user-name">Pharmacist</div><div class="user-role">Pharmacy</div></div>
+    </div>
+  </div>
+</div>
+
+<div id="main">
+  <div id="topbar">
+    <div class="topbar-title" id="page-title">Prescription Queue</div>
+    <div class="live-badge"><span class="live-dot"></span>Live</div>
+    <button class="topbar-btn" onclick="toggleTheme()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg></button>
+    <a href="/auth/logout" class="topbar-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg></a>
+  </div>
+
+  <div id="content">
+
+    <!-- QUEUE -->
+    <div class="page active" id="page-queue">
+      <div class="stat-row">
+        <div class="kpi"><div class="kpi-label">Pending Rx</div><div class="kpi-value" id="s-pending" style="color:var(--amber)">—</div></div>
+        <div class="kpi"><div class="kpi-label">Dispensed Today</div><div class="kpi-value" id="s-dispensed" style="color:var(--teal)">—</div></div>
+        <div class="kpi"><div class="kpi-label">Low Stock Items</div><div class="kpi-value" id="s-low" style="color:var(--red)">—</div></div>
+        <div class="kpi"><div class="kpi-label">Expiring Soon</div><div class="kpi-value" id="s-expiring" style="color:var(--orange)">—</div></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr">
+          <div class="card-title">Pending Prescriptions</div>
+          <button class="btn btn-outline btn-sm" onclick="loadQueue()">↻ Refresh</button>
+        </div>
+        <div class="card-body" id="rx-queue"><div class="loading">Loading...</div></div>
+      </div>
+    </div>
+
+    <!-- DISPENSED -->
+    <div class="page" id="page-dispensed">
+      <div class="card">
+        <div class="card-hdr"><div class="card-title">Dispensed Today</div></div>
+        <div class="card-body" id="dispensed-list"><div class="loading">Loading...</div></div>
+      </div>
+    </div>
+
+    <!-- INVENTORY -->
+    <div class="page" id="page-inventory">
+      <div class="card">
+        <div class="card-hdr">
+          <div class="card-title">Drug Inventory</div>
+          <div style="display:flex;gap:8px">
+            <div class="search-wrap" style="width:240px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input type="text" id="inv-search" placeholder="Search drug..." oninput="debounce(loadInventory,400)()"/>
+            </div>
+          </div>
+        </div>
+        <table>
+          <thead><tr><th>Drug Name</th><th>Generic</th><th>Type</th><th>Stock</th><th>Expiry</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="inv-tbody"><tr><td colspan="8" class="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ALERTS -->
+    <div class="page" id="page-alerts">
+      <div class="two-col">
+        <div class="card">
+          <div class="card-hdr"><div class="card-title">Low Stock Alerts</div></div>
+          <div class="card-body" id="low-stock-list"><div class="loading">Loading...</div></div>
+        </div>
+        <div class="card">
+          <div class="card-hdr"><div class="card-title">Expiring Soon (30 days)</div></div>
+          <div class="card-body" id="expiring-list"><div class="loading">Loading...</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADD DRUG -->
+    <div class="page" id="page-add-drug">
+      <div class="card" style="max-width:640px">
+        <div class="card-hdr"><div class="card-title">Add New Drug to Inventory</div></div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group"><label>Drug Name *</label><input type="text" id="d-name" placeholder="e.g. Paracetamol"/></div>
+            <div class="form-group"><label>Generic Name</label><input type="text" id="d-generic" placeholder="e.g. Acetaminophen"/></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Brand Name</label><input type="text" id="d-brand"/></div>
+            <div class="form-group"><label>Drug Type</label>
+              <select id="d-type">
+                <option value="tablet">Tablet</option><option value="capsule">Capsule</option>
+                <option value="syrup">Syrup</option><option value="injection">Injection</option>
+                <option value="cream">Cream</option><option value="drops">Drops</option>
+                <option value="inhaler">Inhaler</option><option value="other">Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Category</label><input type="text" id="d-cat" placeholder="e.g. Analgesic"/></div>
+            <div class="form-group"><label>Manufacturer</label><input type="text" id="d-mfr"/></div>
+          </div>
+          <div class="divider"></div>
+          <div style="font-size:12px;font-weight:600;color:var(--text-xs);text-transform:uppercase;margin-bottom:10px">Initial Stock</div>
+          <div class="form-row-3">
+            <div class="form-group"><label>Batch Number</label><input type="text" id="d-batch"/></div>
+            <div class="form-group"><label>Quantity</label><input type="number" id="d-qty" value="0" min="0"/></div>
+            <div class="form-group"><label>Reorder Level</label><input type="number" id="d-reorder" value="10" min="1"/></div>
+          </div>
+          <div class="form-row-3">
+            <div class="form-group"><label>Unit Cost (₹)</label><input type="number" id="d-cost" step="0.01" value="0"/></div>
+            <div class="form-group"><label>Selling Price (₹)</label><input type="number" id="d-price" step="0.01" value="0"/></div>
+            <div class="form-group"><label>Expiry Date</label><input type="date" id="d-expiry"/></div>
+          </div>
+          <div class="success-msg" id="drug-success">Drug added successfully!</div>
+          <button class="btn btn-amber" onclick="addDrug()" style="width:100%;margin-top:8px">Add to Inventory</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- RESTOCK MODAL -->
+<div class="modal-bg" id="modal-restock">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-title" id="restock-title">Restock Drug</div><button class="modal-close" onclick="closeModal('modal-restock')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="restock-drug-id"/>
+      <div class="form-row">
+        <div class="form-group"><label>Add Quantity</label><input type="number" id="restock-qty" value="0" min="1"/></div>
+        <div class="form-group"><label>Batch Number</label><input type="text" id="restock-batch"/></div>
+      </div>
+      <div class="form-group"><label>New Expiry Date</label><input type="date" id="restock-expiry"/></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('modal-restock')">Cancel</button>
+      <button class="btn btn-amber" onclick="submitRestock()">Update Stock</button>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  loadStats(); loadQueue();
+  setInterval(loadQueue, 30000);
+  if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme','dark');
+});
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  event.currentTarget.classList.add('active');
+  const titles = {queue:'Prescription Queue',dispensed:'Dispensed Today',inventory:'Drug Inventory',alerts:'Stock Alerts','add-drug':'Add Drug'};
+  document.getElementById('page-title').textContent = titles[name]||name;
+  if (name==='dispensed') loadDispensed();
+  if (name==='inventory') loadInventory();
+  if (name==='alerts') loadAlerts();
+}
+
+async function loadStats() {
+  const r = await fetch('/pharmacy/api/stats');
+  const d = await r.json();
+  if (!d.success) return;
+  const s = d.stats;
+  document.getElementById('s-pending').textContent   = s.pending_rx;
+  document.getElementById('s-dispensed').textContent = s.dispensed_today;
+  document.getElementById('s-low').textContent       = s.low_stock;
+  document.getElementById('s-expiring').textContent  = s.expiring_soon;
+  document.getElementById('pending-badge').textContent = s.pending_rx;
+}
+
+async function loadQueue() {
+  const r = await fetch('/pharmacy/api/prescriptions?status=active');
+  const d = await r.json();
+  const el = document.getElementById('rx-queue');
+  if (!d.prescriptions.length) { el.innerHTML = '<div class="empty">No pending prescriptions</div>'; return; }
+  el.innerHTML = d.prescriptions.map(rx => `
+    <div class="rx-card">
+      <div class="rx-hdr">
+        <div>
+          <div class="rx-patient">${rx.patient_name} <span style="font-size:11px;color:var(--text-xs);font-weight:400">${rx.patient_uhid}</span></div>
+          <div class="rx-meta">By ${rx.doctor_name} · ${rx.created_at}</div>
+          <div class="rx-meta rx-no">${rx.prescription_no}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <span class="badge badge-amber">Pending</span>
+          <button class="btn btn-sm btn-teal" onclick="dispense(${rx.id})">✓ Dispense All</button>
+        </div>
+      </div>
+      <div class="rx-items">
+        ${rx.items.map(i=>`
+          <div class="rx-item">
+            <div class="rx-drug">${i.drug_name}</div>
+            <div class="rx-dose">${i.dosage} · ${i.frequency} · ${i.duration}</div>
+            <div class="rx-dose">Qty: ${i.quantity}</div>
+            ${i.instructions?`<div class="rx-dose" style="color:var(--blue)">${i.instructions}</div>`:''}
+          </div>`).join('')}
+      </div>
+      ${rx.notes?`<div style="margin-top:8px;font-size:11px;color:var(--text-xs);background:var(--bg);padding:6px 8px;border-radius:5px">Note: ${rx.notes}</div>`:''}
+    </div>`).join('');
+  loadStats();
+}
+
+async function dispense(rxId) {
+  if (!confirm('Dispense this prescription? Stock will be deducted.')) return;
+  const r = await fetch(`/pharmacy/api/prescriptions/${rxId}/dispense`, {method:'POST'});
+  const d = await r.json();
+  if (d.success) { loadQueue(); loadStats(); showToast(d.message,'success'); }
+  else alert(d.message || 'Dispense failed. Check stock levels.');
+}
+
+async function loadDispensed() {
+  const r = await fetch('/pharmacy/api/prescriptions?status=dispensed');
+  const d = await r.json();
+  const el = document.getElementById('dispensed-list');
+  if (!d.prescriptions.length) { el.innerHTML = '<div class="empty">No dispensed prescriptions today</div>'; return; }
+  el.innerHTML = d.prescriptions.map(rx=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px">
+      <div><div class="fw">${rx.patient_name}</div><div style="font-size:11px;color:var(--text-xs)">${rx.prescription_no} · ${rx.doctor_name}</div></div>
+      <div style="text-align:right"><span class="badge badge-teal">Dispensed</span><div style="font-size:10px;color:var(--text-xs);margin-top:3px">${rx.created_at}</div></div>
+    </div>`).join('');
+}
+
+async function loadInventory() {
+  const search = document.getElementById('inv-search')?.value || '';
+  const r = await fetch(`/pharmacy/api/drugs?search=${encodeURIComponent(search)}`);
+  const d = await r.json();
+  const tbody = document.getElementById('inv-tbody');
+  if (!d.drugs.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty">No drugs found</td></tr>'; return; }
+  tbody.innerHTML = d.drugs.map(drug=>`
+    <tr>
+      <td class="fw">${drug.name}</td>
+      <td style="color:var(--text-sm)">${drug.generic_name||'—'}</td>
+      <td><span class="badge badge-gray">${drug.drug_type}</span></td>
+      <td><span style="font-weight:600;color:${drug.stock<=0?'var(--red)':drug.is_low?'var(--amber)':'var(--teal)'}">${drug.stock}</span></td>
+      <td style="font-size:12px">${drug.expiry_date}</td>
+      <td>₹${drug.selling_price.toFixed(2)}</td>
+      <td>${drug.stock<=0?'<span class="badge badge-red">Out of Stock</span>':drug.is_low?'<span class="badge badge-amber">Low Stock</span>':'<span class="badge badge-teal">In Stock</span>'}</td>
+      <td><button class="btn btn-sm btn-outline" onclick="openRestock(${drug.id},'${drug.name}')">Restock</button></td>
+    </tr>`).join('');
+}
+
+async function loadAlerts() {
+  const r = await fetch('/pharmacy/api/alerts');
+  const d = await r.json();
+  const lowEl = document.getElementById('low-stock-list');
+  const expEl = document.getElementById('expiring-list');
+  lowEl.innerHTML = d.low_stock.length ? d.low_stock.map(i=>`
+    <div class="alert-item danger">
+      <div style="flex:1"><div style="font-size:12px;font-weight:600">${i.name}</div>
+      <div style="font-size:11px">Stock: ${i.current} / Reorder: ${i.reorder}</div></div>
+      <button class="btn btn-sm btn-outline" onclick="openRestock(${i.drug_id},'${i.name}')">Restock</button>
+    </div>`).join('') : '<div class="empty">No low stock alerts</div>';
+  expEl.innerHTML = d.expiring.length ? d.expiring.map(i=>`
+    <div class="alert-item warning">
+      <div><div style="font-size:12px;font-weight:600">${i.name}</div>
+      <div style="font-size:11px">Expires: ${i.expiry} · Qty: ${i.qty}</div></div>
+    </div>`).join('') : '<div class="empty">No drugs expiring soon</div>';
+}
+
+function openRestock(id, name) {
+  document.getElementById('restock-drug-id').value = id;
+  document.getElementById('restock-title').textContent = `Restock: ${name}`;
+  document.getElementById('restock-qty').value = '';
+  document.getElementById('restock-batch').value = '';
+  document.getElementById('modal-restock').classList.add('open');
+}
+
+async function submitRestock() {
+  const id  = document.getElementById('restock-drug-id').value;
+  const qty = parseInt(document.getElementById('restock-qty').value);
+  if (!qty || qty <= 0) { alert('Enter valid quantity'); return; }
+  const r = await fetch(`/pharmacy/api/drugs/${id}/restock`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({quantity: qty, batch_number: document.getElementById('restock-batch').value,
+      expiry_date: document.getElementById('restock-expiry').value})
+  });
+  const d = await r.json();
+  if (d.success) { closeModal('modal-restock'); loadInventory(); loadAlerts(); loadStats(); showToast(d.message,'success'); }
+  else alert(d.message);
+}
+
+async function addDrug() {
+  const data = {
+    name: document.getElementById('d-name').value.trim(),
+    generic_name: document.getElementById('d-generic').value.trim(),
+    brand_name: document.getElementById('d-brand').value.trim(),
+    drug_type: document.getElementById('d-type').value,
+    category: document.getElementById('d-cat').value.trim(),
+    manufacturer: document.getElementById('d-mfr').value.trim(),
+    batch_number: document.getElementById('d-batch').value.trim(),
+    quantity: document.getElementById('d-qty').value,
+    reorder_level: document.getElementById('d-reorder').value,
+    unit_cost: document.getElementById('d-cost').value,
+    selling_price: document.getElementById('d-price').value,
+    expiry_date: document.getElementById('d-expiry').value,
+  };
+  if (!data.name) { alert('Drug name required'); return; }
+  const r = await fetch('/pharmacy/api/drugs/add', {
+    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)
+  });
+  const d = await r.json();
+  if (d.success) {
+    document.getElementById('drug-success').classList.add('show');
+    setTimeout(()=>document.getElementById('drug-success').classList.remove('show'),3000);
+    ['d-name','d-generic','d-brand','d-cat','d-mfr','d-batch'].forEach(id=>document.getElementById(id).value='');
+    ['d-qty','d-cost','d-price'].forEach(id=>document.getElementById(id).value='0');
+  } else alert(d.message);
+}
+
+function showToast(msg, type='success') {
+  const t = document.createElement('div');
+  t.style.cssText = `position:fixed;top:70px;right:20px;padding:10px 16px;border-radius:8px;font-size:13px;z-index:300;background:${type==='success'?'var(--teal)':'var(--red)'};color:#fff;animation:fadeIn .2s ease`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 3000);
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function toggleTheme() {
+  const dark = document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme',dark?'':'dark');
+  localStorage.setItem('theme',dark?'light':'dark');
+}
+function debounce(fn,delay){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),delay);}}
+</script>
+</body>
+</html>

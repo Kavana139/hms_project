@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Patient Portal — MediCore HMS</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue:#1a6fc4;--blue-light:#e8f1fb;--blue-dark:#155fa0;
+  --teal:#0f9e75;--teal-light:#e1f5ee;
+  --amber:#b45309;--amber-light:#fef3c7;
+  --red:#dc2626;--red-light:#fef2f2;
+  --green:#15803d;--green-light:#f0fdf4;
+  --purple:#7c3aed;--purple-light:#f5f3ff;
+  --gray:#6b7280;--border:#e5e7eb;
+  --sidebar-w:220px;--bg:#f1f5f9;--white:#fff;
+  --text:#1e293b;--text-sm:#64748b;--text-xs:#94a3b8;--radius:10px;
+}
+[data-theme=dark]{--bg:#0f172a;--white:#1e293b;--text:#f1f5f9;--text-sm:#94a3b8;--text-xs:#64748b;--border:#334155;--blue-light:#1e3a5f;--teal-light:#0d3324;--amber-light:#451a03;--red-light:#450a0a;--green-light:#052e16;--purple-light:#2e1065}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
+#sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;overflow-y:auto}
+.sidebar-brand{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.brand-icon{width:32px;height:32px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.brand-icon svg{width:16px;height:16px;fill:white}
+.brand-name{font-size:14px;font-weight:700}.brand-sub{font-size:10px;color:var(--text-xs)}
+.nav-section{font-size:10px;font-weight:600;color:var(--text-xs);text-transform:uppercase;letter-spacing:.08em;padding:12px 16px 4px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 12px;margin:1px 8px;border-radius:7px;cursor:pointer;font-size:13px;color:var(--text-sm);transition:all .15s;text-decoration:none}
+.nav-item:hover{background:var(--bg);color:var(--text)}
+.nav-item.active{background:var(--blue-light);color:var(--blue);font-weight:500}
+.nav-item svg{width:15px;height:15px;flex-shrink:0}
+.sidebar-footer{margin-top:auto;padding:12px;border-top:1px solid var(--border)}
+.user-card{display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;cursor:pointer}
+.user-card:hover{background:var(--bg)}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;flex-shrink:0}
+.user-name{font-size:12px;font-weight:500}.user-uhid{font-size:10px;color:var(--text-xs)}
+#main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column}
+#topbar{background:var(--white);border-bottom:1px solid var(--border);height:54px;display:flex;align-items:center;padding:0 20px;gap:10px;position:sticky;top:0;z-index:50}
+.topbar-title{font-size:15px;font-weight:600;flex:1}
+.topbar-btn{width:32px;height:32px;border-radius:7px;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-sm)}
+.topbar-btn:hover{background:var(--bg)}.topbar-btn svg{width:17px;height:17px}
+#content{padding:20px;flex:1}
+.page{display:none}.page.active{display:block;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.card{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;margin-bottom:16px}
+.card-hdr{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:13px;font-weight:600}.card-body{padding:16px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+.kpi{background:var(--white);border-radius:var(--radius);padding:14px 16px;border:1px solid var(--border)}
+.kpi-label{font-size:10px;font-weight:600;color:var(--text-xs);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.kpi-value{font-size:22px;font-weight:700;line-height:1}
+.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:500}
+.badge-blue{background:var(--blue-light);color:var(--blue)}.badge-teal{background:var(--teal-light);color:var(--teal)}
+.badge-amber{background:var(--amber-light);color:var(--amber)}.badge-red{background:var(--red-light);color:var(--red)}
+.badge-green{background:var(--green-light);color:var(--green)}.badge-purple{background:var(--purple-light);color:var(--purple)}
+.badge-gray{background:var(--bg);color:var(--gray)}
+.btn{padding:8px 14px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all .15s;display:inline-flex;align-items:center;gap:5px}
+.btn-primary{background:var(--blue);color:#fff}.btn-primary:hover{background:var(--blue-dark)}
+.btn-outline{background:none;border:1px solid var(--border);color:var(--text)}.btn-outline:hover{background:var(--bg)}
+.btn-sm{padding:5px 10px;font-size:11px}.btn-danger{background:var(--red);color:#fff;font-size:11px}
+.form-group{margin-bottom:12px}
+.form-group label{display:block;font-size:11px;font-weight:500;color:var(--text-sm);margin-bottom:4px}
+.form-group input,.form-group select{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;color:var(--text);background:var(--white);outline:none}
+.form-group input:focus,.form-group select:focus{border-color:var(--blue)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.info-row:last-child{border-bottom:none}
+.info-label{color:var(--text-xs);font-size:11px;font-weight:500;min-width:100px}
+.info-val{font-weight:500;text-align:right}
+.visit-card{border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px;cursor:pointer;transition:box-shadow .15s}
+.visit-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.07)}
+.visit-date{font-size:12px;color:var(--text-xs);margin-bottom:4px}
+.visit-doctor{font-size:14px;font-weight:600}
+.visit-diagnosis{font-size:12px;color:var(--text-sm);margin-top:4px}
+.rx-card{border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px}
+.rx-drug{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px}
+.rx-drug:last-child{border-bottom:none}
+.lab-card{border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px;cursor:pointer;transition:box-shadow .15s}
+.lab-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.07)}
+.lab-card.has-critical{border-left:3px solid var(--red)}
+.result-row{display:grid;grid-template-columns:2fr 1fr 1fr 60px;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px}
+.result-row:last-child{border-bottom:none}
+.flag-high{color:var(--red);font-weight:600}.flag-low{color:var(--blue);font-weight:600}
+.flag-normal{color:var(--teal)}.flag-critical{color:var(--red);font-weight:700}
+.bill-card{border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px}
+.appt-card{border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px;transition:box-shadow .15s}
+.appt-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.07)}
+.appt-date{font-size:20px;font-weight:700;color:var(--blue);line-height:1}
+.appt-month{font-size:11px;color:var(--text-xs)}
+.slot-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.slot-btn{padding:7px;border:1px solid var(--border);border-radius:6px;font-size:11px;text-align:center;cursor:pointer;background:var(--white);color:var(--text);transition:all .15s}
+.slot-btn:hover:not(.booked){background:var(--blue-light);border-color:var(--blue);color:var(--blue)}
+.slot-btn.selected{background:var(--blue);color:#fff;border-color:var(--blue)}
+.slot-btn.booked{background:var(--bg);color:var(--text-xs);cursor:not-allowed;text-decoration:line-through}
+.vitals-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+.vitals-item:last-child{border-bottom:none}
+.vitals-label{font-size:12px;color:var(--text-sm)}
+.vitals-value{font-size:16px;font-weight:600}
+.vitals-unit{font-size:10px;color:var(--text-xs)}
+.divider{height:1px;background:var(--border);margin:12px 0}
+.empty{text-align:center;padding:32px;color:var(--text-xs);font-size:13px}
+.loading{text-align:center;padding:20px;color:var(--text-xs)}
+.fw{font-weight:500}.ml-auto{margin-left:auto}
+.notif-item{padding:10px;border-radius:8px;margin-bottom:8px;cursor:pointer}
+.notif-item.unread{background:var(--blue-light)}
+.notif-item:hover{background:var(--bg)}
+.notif-title{font-size:12px;font-weight:600}
+.notif-msg{font-size:11px;color:var(--text-sm);margin-top:2px}
+.notif-time{font-size:10px;color:var(--text-xs);margin-top:3px}
+.search-wrap{position:relative;margin-bottom:14px}
+.search-wrap input{width:100%;padding:8px 10px 8px 32px;border:1px solid var(--border);border-radius:7px;font-size:13px;background:var(--white);color:var(--text);outline:none}
+.search-wrap input:focus{border-color:var(--blue)}
+.search-wrap svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--text-xs)}
+.search-dropdown{position:absolute;top:100%;left:0;right:0;background:var(--white);border:1px solid var(--border);border-top:none;border-radius:0 0 7px 7px;max-height:200px;overflow-y:auto;z-index:50;display:none}
+.search-dropdown.open{display:block}
+.search-opt{padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border)}
+.search-opt:hover{background:var(--bg)}.search-opt:last-child{border-bottom:none}
+.success-box{background:var(--teal-light);border-radius:8px;padding:14px;border:1px solid #9fe1cb;margin-top:10px}
+.success-box .title{font-size:13px;font-weight:600;color:var(--teal);margin-bottom:6px}
+</style>
+</head>
+<body>
+<div id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2zm1 14h-2v-4H8l4-7 4 7h-3v4z"/></svg></div>
+    <div><div class="brand-name">MediCore HMS</div><div class="brand-sub">Patient Portal</div></div>
+  </div>
+  <div class="nav-section">My Health</div>
+  <a class="nav-item active" onclick="showPage('home')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>My Health
+  </a>
+  <a class="nav-item" onclick="showPage('appointments')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Appointments
+  </a>
+  <a class="nav-item" onclick="showPage('book')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Book Appointment
+  </a>
+  <div class="nav-section">Records</div>
+  <a class="nav-item" onclick="showPage('visits')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>Visit History
+  </a>
+  <a class="nav-item" onclick="showPage('prescriptions')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/></svg>Prescriptions
+  </a>
+  <a class="nav-item" onclick="showPage('lab')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v11m0 0l-3 3m3-3l3 3"/></svg>Lab Reports
+  </a>
+  <a class="nav-item" onclick="showPage('bills')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>Bills
+  </a>
+  <div class="nav-section">Account</div>
+  <a class="nav-item" onclick="showPage('profile')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>My Profile
+  </a>
+  <a class="nav-item" onclick="showPage('notifications')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>Notifications
+  </a>
+  <div class="sidebar-footer">
+    <div class="user-card" onclick="window.location='/auth/logout'">
+      <div class="avatar" id="pt-avatar">PT</div>
+      <div>
+        <div class="user-name" id="pt-name">Patient</div>
+        <div class="user-uhid" id="pt-uhid">UHID: —</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="main">
+  <div id="topbar">
+    <div class="topbar-title" id="page-title">My Health</div>
+    <button class="topbar-btn" onclick="toggleTheme()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg></button>
+    <a href="/auth/logout" class="topbar-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg></a>
+  </div>
+  <div id="content">
+
+    <!-- HOME -->
+    <div class="page active" id="page-home">
+      <div id="welcome-banner" style="background:var(--blue);border-radius:var(--radius);padding:20px 24px;color:#fff;margin-bottom:20px">
+        <div style="font-size:18px;font-weight:700" id="welcome-name">Welcome!</div>
+        <div style="font-size:12px;opacity:.8;margin-top:4px" id="welcome-uhid">Loading your health summary...</div>
+      </div>
+      <div class="stat-row">
+        <div class="kpi"><div class="kpi-label">Upcoming Appointments</div><div class="kpi-value" id="h-appts" style="color:var(--blue)">—</div></div>
+        <div class="kpi"><div class="kpi-label">Lab Reports</div><div class="kpi-value" id="h-labs" style="color:var(--teal)">—</div></div>
+        <div class="kpi"><div class="kpi-label">Outstanding Bills</div><div class="kpi-value" id="h-bills" style="color:var(--amber)">—</div></div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-hdr"><div class="card-title">Next Appointment</div><button class="btn btn-primary btn-sm" onclick="showPage2('book')">Book New</button></div>
+          <div class="card-body" id="next-appt"><div class="loading">Loading...</div></div>
+        </div>
+        <div class="card">
+          <div class="card-hdr"><div class="card-title">Latest Vitals</div></div>
+          <div class="card-body" id="vitals-panel"><div class="loading">Loading...</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><div class="card-title">Allergies & Conditions</div></div>
+        <div class="card-body" id="health-flags"><div class="loading">Loading...</div></div>
+      </div>
+    </div>
+
+    <!-- APPOINTMENTS -->
+    <div class="page" id="page-appointments">
+      <div class="card">
+        <div class="card-hdr"><div class="card-title">Upcoming Appointments</div></div>
+        <div class="card-body" id="upcoming-appts"><div class="loading">Loading...</div></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><div class="card-title">Past Appointments</div></div>
+        <div class="card-body" id="past-appts"><div class="loading">Loading...</div></div>
+      </div>
+    </div>
+
+    <!-- BOOK -->
+    <div class="page" id="page-book">
+      <div class="card" style="max-width:560px">
+        <div class="card-hdr"><div class="card-title">Book an Appointment</div></div>
+        <div class="card-body">
+          <div id="book-alert" style="display:none;padding:10px;border-radius:7px;font-size:12px;margin-bottom:12px"></div>
+          <div class="form-group"><label>Department</label>
+            <select id="b-dept" onchange="loadDoctors()"><option value="">All Departments</option></select>
+          </div>
+          <div class="form-group"><label>Doctor *</label>
+            <select id="b-doctor" onchange="loadSlots()"><option value="">Select doctor</option></select>
+          </div>
+          <div class="form-group"><label>Date *</label>
+            <input type="date" id="b-date" onchange="loadSlots()"/>
+          </div>
+          <div class="form-group"><label>Available Time Slots</label>
+            <div class="slot-grid" id="b-slots"></div>
+            <input type="hidden" id="b-time"/>
+          </div>
+          <div class="form-group"><label>Reason for Visit</label>
+            <input type="text" id="b-reason" placeholder="Brief reason..."/>
+          </div>
+          <button class="btn btn-primary" onclick="confirmBooking()" style="width:100%">Confirm Booking</button>
+          <div id="book-result" style="display:none" class="success-box">
+            <div class="title">✓ Appointment Booked!</div>
+            <div style="font-size:12px" id="book-result-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VISITS -->
+    <div class="page" id="page-visits">
+      <div id="visits-list"><div class="loading">Loading...</div></div>
+    </div>
+
+    <!-- PRESCRIPTIONS -->
+    <div class="page" id="page-prescriptions">
+      <div id="rx-list"><div class="loading">Loading...</div></div>
+    </div>
+
+    <!-- LAB -->
+    <div class="page" id="page-lab">
+      <div id="lab-list"><div class="loading">Loading...</div></div>
+    </div>
+
+    <!-- BILLS -->
+    <div class="page" id="page-bills">
+      <div id="bills-list"><div class="loading">Loading...</div></div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="page" id="page-profile">
+      <div class="two-col">
+        <div class="card">
+          <div class="card-hdr"><div class="card-title">Personal Information</div></div>
+          <div class="card-body" id="profile-personal"><div class="loading">Loading...</div></div>
+        </div>
+        <div class="card">
+          <div class="card-hdr"><div class="card-title">Health Information</div></div>
+          <div class="card-body" id="profile-health"><div class="loading">Loading...</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTIFICATIONS -->
+    <div class="page" id="page-notifications">
+      <div class="card">
+        <div class="card-hdr">
+          <div class="card-title">Notifications</div>
+          <button class="btn btn-outline btn-sm" onclick="markAllRead()">Mark all read</button>
+        </div>
+        <div class="card-body" id="notif-list"><div class="loading">Loading...</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let patientData = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  const today = new Date().toISOString().split('T')[0];
+  const dEl = document.getElementById('b-date');
+  if (dEl) { dEl.min = today; dEl.value = today; }
+  loadProfile();
+  loadDepartments();
+  if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+});
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+  const titles = { home:'My Health', appointments:'Appointments', book:'Book Appointment',
+    visits:'Visit History', prescriptions:'Prescriptions', lab:'Lab Reports',
+    bills:'Bills', profile:'My Profile', notifications:'Notifications' };
+  document.getElementById('page-title').textContent = titles[name] || name;
+  if (name === 'appointments')  loadAppointments();
+  if (name === 'visits')        loadVisits();
+  if (name === 'prescriptions') loadPrescriptions();
+  if (name === 'lab')           loadLab();
+  if (name === 'bills')         loadBills();
+  if (name === 'profile')       loadProfilePage();
+  if (name === 'notifications') loadNotifications();
+}
+
+function showPage2(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('page-title').textContent = name === 'book' ? 'Book Appointment' : name;
+}
+
+async function loadProfile() {
+  const r = await fetch('/patient/api/profile');
+  const d = await r.json();
+  if (!d.success || !d.patient) {
+    document.getElementById('welcome-name').textContent = 'Welcome!';
+    document.getElementById('welcome-uhid').textContent = 'Profile not linked yet. Contact reception.';
+    return;
+  }
+  patientData = d.patient;
+  const p = d.patient;
+  const initials = p.full_name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+  document.getElementById('pt-avatar').textContent = initials;
+  document.getElementById('pt-name').textContent   = p.full_name;
+  document.getElementById('pt-uhid').textContent   = `UHID: ${p.uhid}`;
+  document.getElementById('welcome-name').textContent = `Hello, ${p.full_name.split(' ')[0]}!`;
+  document.getElementById('welcome-uhid').textContent = `${p.uhid} · ${p.blood_group} · ${p.age || '?'} yrs`;
+  // Vitals
+  const vp = document.getElementById('vitals-panel');
+  if (p.last_vitals) {
+    const v = p.last_vitals;
+    vp.innerHTML = `
+      <div class="vitals-item"><span class="vitals-label">Blood Pressure</span><span><span class="vitals-value">${v.systolic_bp||'?'}/${v.diastolic_bp||'?'}</span> <span class="vitals-unit">mmHg</span></span></div>
+      <div class="vitals-item"><span class="vitals-label">Pulse Rate</span><span><span class="vitals-value">${v.pulse_rate||'?'}</span> <span class="vitals-unit">bpm</span></span></div>
+      <div class="vitals-item"><span class="vitals-label">SpO2</span><span><span class="vitals-value">${v.spo2||'?'}</span> <span class="vitals-unit">%</span></span></div>
+      <div class="vitals-item"><span class="vitals-label">Temperature</span><span><span class="vitals-value">${v.temperature||'?'}</span> <span class="vitals-unit">°F</span></span></div>
+      <div class="vitals-item"><span class="vitals-label">BMI</span><span><span class="vitals-value">${v.bmi||'?'}</span></span></div>`;
+  } else {
+    vp.innerHTML = '<div class="empty">No vitals recorded yet</div>';
+  }
+  // Allergies & conditions
+  const hf = document.getElementById('health-flags');
+  const allergyHTML = p.allergies.length
+    ? p.allergies.map(a => `<span class="badge badge-red" style="margin-right:4px;margin-bottom:4px">${a.allergen} (${a.severity})</span>`).join('')
+    : '<span class="badge badge-gray">None known</span>';
+  const condHTML = p.conditions.length
+    ? p.conditions.map(c => `<span class="badge badge-amber" style="margin-right:4px;margin-bottom:4px">${c.condition}</span>`).join('')
+    : '<span class="badge badge-gray">None</span>';
+  hf.innerHTML = `<div style="margin-bottom:12px"><div style="font-size:11px;font-weight:600;color:var(--text-xs);text-transform:uppercase;margin-bottom:6px">Known Allergies</div>${allergyHTML}</div><div><div style="font-size:11px;font-weight:600;color:var(--text-xs);text-transform:uppercase;margin-bottom:6px">Chronic Conditions</div>${condHTML}</div>`;
+  loadHomeData();
+}
+
+async function loadHomeData() {
+  const [ra, rb] = await Promise.all([
+    fetch('/patient/api/appointments'),
+    fetch('/patient/api/bills'),
+  ]);
+  const [da, db2] = await Promise.all([ra.json(), rb.json()]);
+  document.getElementById('h-appts').textContent = da.upcoming?.length || 0;
+  document.getElementById('h-bills').textContent = db2.bills?.filter(b => b.balance > 0).length || 0;
+  // Next appointment
+  const na = document.getElementById('next-appt');
+  if (da.upcoming?.length) {
+    const a = da.upcoming[0];
+    na.innerHTML = `<div style="display:flex;align-items:center;gap:14px">
+      <div style="text-align:center;min-width:48px"><div class="appt-date">${a.date.split(' ')[0]}</div><div class="appt-month">${a.date.split(' ')[1]}</div></div>
+      <div><div style="font-size:14px;font-weight:600">${a.doctor}</div>
+      <div style="font-size:11px;color:var(--text-xs)">${a.specialization}</div>
+      <div style="font-size:12px;color:var(--text-sm);margin-top:4px">⏰ ${a.time} · Token #${a.token}</div>
+      </div></div>`;
+  } else {
+    na.innerHTML = `<div class="empty">No upcoming appointments <br><button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="showPage2('book')">Book Now</button></div>`;
+  }
+  const lr = await fetch('/patient/api/lab-reports');
+  const ld = await lr.json();
+  document.getElementById('h-labs').textContent = ld.reports?.length || 0;
+}
+
+async function loadAppointments() {
+  const r = await fetch('/patient/api/appointments');
+  const d = await r.json();
+  const sc = { confirmed:'blue', checked_in:'amber', in_progress:'teal', completed:'green', cancelled:'red', no_show:'gray' };
+  const uEl = document.getElementById('upcoming-appts');
+  const pEl = document.getElementById('past-appts');
+  uEl.innerHTML = d.upcoming?.length ? d.upcoming.map(a => `
+    <div class="appt-card">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="text-align:center;min-width:44px;padding:8px;background:var(--blue-light);border-radius:8px">
+          <div style="font-size:18px;font-weight:700;color:var(--blue);line-height:1">${a.date.split(' ')[0]}</div>
+          <div style="font-size:10px;color:var(--blue)">${a.date.split(' ')[1]}</div>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:600">${a.doctor}</div>
+          <div style="font-size:11px;color:var(--text-xs)">${a.specialization}</div>
+          <div style="font-size:12px;color:var(--text-sm);margin-top:3px">⏰ ${a.time} · Token #${a.token||'—'} · <span class="badge badge-${sc[a.status]||'gray'}">${a.status}</span></div>
+        </div>
+        ${a.status !== 'cancelled' ? `<button class="btn btn-danger btn-sm" onclick="cancelAppt(${a.id})">Cancel</button>` : ''}
+      </div>
+    </div>`).join('') : '<div class="empty">No upcoming appointments</div>';
+  pEl.innerHTML = d.past?.length ? d.past.map(a => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px">
+      <div><div class="fw">${a.doctor}</div><div style="font-size:11px;color:var(--text-xs)">${a.date} · ${a.specialization}</div></div>
+      <span class="badge badge-${sc[a.status]||'gray'}">${a.status}</span>
+    </div>`).join('') : '<div class="empty">No past appointments</div>';
+}
+
+async function cancelAppt(id) {
+  if (!confirm('Cancel this appointment?')) return;
+  const r = await fetch(`/patient/api/appointments/${id}/cancel`, { method:'POST' });
+  const d = await r.json();
+  if (d.success) { loadAppointments(); loadHomeData(); }
+  else alert(d.message);
+}
+
+async function loadDepartments() {
+  const r = await fetch('/patient/api/departments');
+  const d = await r.json();
+  const sel = document.getElementById('b-dept');
+  if (sel) sel.innerHTML = '<option value="">All Departments</option>' +
+    (d.departments||[]).map(dept => `<option value="${dept.id}">${dept.name}</option>`).join('');
+  loadDoctors();
+}
+
+async function loadDoctors() {
+  const deptId = document.getElementById('b-dept')?.value || '';
+  const url = deptId ? `/patient/api/doctors?department_id=${deptId}` : '/patient/api/doctors';
+  const r = await fetch(url);
+  const d = await r.json();
+  const sel = document.getElementById('b-doctor');
+  sel.innerHTML = '<option value="">Select doctor</option>' +
+    (d.doctors||[]).map(doc => `<option value="${doc.id}">${doc.full_name}${doc.specialization?' — '+doc.specialization:''} · ₹${doc.consultation_fee}</option>`).join('');
+}
+
+async function loadSlots() {
+  const did  = document.getElementById('b-doctor').value;
+  const date = document.getElementById('b-date').value;
+  const grid = document.getElementById('b-slots');
+  document.getElementById('b-time').value = '';
+  if (!did || !date) { grid.innerHTML = ''; return; }
+  grid.innerHTML = '<div style="font-size:12px;color:var(--text-xs);grid-column:span 4">Loading slots...</div>';
+  const r = await fetch(`/patient/api/doctors/${did}/slots?date=${date}`);
+  const d = await r.json();
+  if (!d.slots.length) { grid.innerHTML = '<div style="font-size:12px;color:var(--text-xs);grid-column:span 4">No slots available on this day</div>'; return; }
+  grid.innerHTML = d.slots.map(s => `<div class="slot-btn ${s.available?'':'booked'}" onclick="selectSlot('${s.time}',this)">${s.time}</div>`).join('');
+}
+
+function selectSlot(time, el) {
+  if (el.classList.contains('booked')) return;
+  document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('b-time').value = time;
+}
+
+async function confirmBooking() {
+  const docId = document.getElementById('b-doctor').value;
+  const date  = document.getElementById('b-date').value;
+  const time  = document.getElementById('b-time').value;
+  const alertEl = document.getElementById('book-alert');
+  if (!docId || !date || !time) {
+    alertEl.style.display = 'block';
+    alertEl.style.background = 'var(--red-light)';
+    alertEl.style.color = 'var(--red)';
+    alertEl.textContent = 'Please select a doctor, date and time slot';
+    return;
+  }
+  alertEl.style.display = 'none';
+  const r = await fetch('/patient/api/appointments/book', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ doctor_id: parseInt(docId), appointment_date: date,
+      appointment_time: time, reason: document.getElementById('b-reason').value })
+  });
+  const d = await r.json();
+  if (d.success) {
+    document.getElementById('book-result').style.display = 'block';
+    document.getElementById('book-result-text').textContent = `Token #${d.token} · ${date} at ${time}`;
+    loadHomeData();
+  } else {
+    alertEl.style.display = 'block';
+    alertEl.style.background = 'var(--red-light)';
+    alertEl.style.color = 'var(--red)';
+    alertEl.textContent = d.message || 'Booking failed';
+  }
+}
+
+async function loadVisits() {
+  const r = await fetch('/patient/api/visits');
+  const d = await r.json();
+  const el = document.getElementById('visits-list');
+  if (!d.visits.length) { el.innerHTML = '<div class="empty">No visit history</div>'; return; }
+  el.innerHTML = d.visits.map(v => `
+    <div class="visit-card">
+      <div class="visit-date">${v.date}</div>
+      <div class="visit-doctor">${v.doctor} <span style="font-size:11px;font-weight:400;color:var(--text-xs)">${v.specialization}</span></div>
+      ${v.chief_complaint ? `<div class="visit-diagnosis">Complaint: ${v.chief_complaint}</div>` : ''}
+      ${v.diagnosis ? `<div class="visit-diagnosis" style="color:var(--blue)">Diagnosis: ${v.diagnosis}${v.icd10?' ('+v.icd10+')':''}</div>` : ''}
+      ${v.plan ? `<div class="visit-diagnosis">Plan: ${v.plan}</div>` : ''}
+      ${v.follow_up ? `<div style="margin-top:6px"><span class="badge badge-teal">Follow up in ${v.follow_up} days</span></div>` : ''}
+    </div>`).join('');
+}
+
+async function loadPrescriptions() {
+  const r = await fetch('/patient/api/prescriptions');
+  const d = await r.json();
+  const el = document.getElementById('rx-list');
+  if (!d.prescriptions.length) { el.innerHTML = '<div class="empty">No prescriptions found</div>'; return; }
+  const sc = { active:'amber', dispensed:'teal', cancelled:'red', partial:'blue' };
+  el.innerHTML = d.prescriptions.map(rx => `
+    <div class="rx-card">
+      <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+        <div><div style="font-size:14px;font-weight:600">${rx.doctor}</div>
+        <div style="font-size:11px;color:var(--text-xs)">${rx.date} · ${rx.prescription_no}</div></div>
+        <span class="badge badge-${sc[rx.status]||'gray'}">${rx.status}</span>
+      </div>
+      ${rx.drugs.map(drug => `
+        <div class="rx-drug">
+          <div style="flex:1;font-weight:500">${drug.name}</div>
+          <div style="color:var(--text-xs)">${drug.dosage} · ${drug.frequency}</div>
+          <div style="color:var(--text-xs)">${drug.duration}</div>
+          ${drug.instructions ? `<div style="color:var(--blue);font-size:10px">${drug.instructions}</div>` : ''}
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+async function loadLab() {
+  const r = await fetch('/patient/api/lab-reports');
+  const d = await r.json();
+  const el = document.getElementById('lab-list');
+  if (!d.reports.length) { el.innerHTML = '<div class="empty">No lab reports found</div>'; return; }
+  el.innerHTML = d.reports.map(rpt => `
+    <div class="lab-card ${rpt.has_critical ? 'has-critical' : ''}">
+      <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+        <div><div style="font-size:14px;font-weight:600">${rpt.order_no}</div>
+        <div style="font-size:11px;color:var(--text-xs)">${rpt.date} · By ${rpt.doctor}</div></div>
+        ${rpt.has_critical ? '<span class="badge badge-red">⚠ Critical</span>' : '<span class="badge badge-teal">Normal</span>'}
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr style="background:var(--bg)"><th style="padding:5px 8px;text-align:left">Test</th><th style="padding:5px 8px;text-align:right">Result</th><th style="padding:5px 8px;text-align:right">Normal</th><th style="padding:5px 8px">Flag</th></tr></thead>
+        <tbody>${rpt.tests.map(t=>`<tr style="${t.critical?'background:var(--red-light)':''}">
+          <td style="padding:5px 8px;font-weight:500">${t.name}</td>
+          <td style="padding:5px 8px;text-align:right;font-weight:600">${t.result} ${t.unit}</td>
+          <td style="padding:5px 8px;text-align:right;color:var(--text-xs)">${t.normal}</td>
+          <td style="padding:5px 8px;text-align:center"><span class="flag-${t.flag}">${t.flag.toUpperCase()}</span></td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>`).join('');
+}
+
+async function loadBills() {
+  const r = await fetch('/patient/api/bills');
+  const d = await r.json();
+  const el = document.getElementById('bills-list');
+  if (!d.bills.length) { el.innerHTML = '<div class="empty">No bills found</div>'; return; }
+  const sc = { pending:'amber', partial:'blue', paid:'teal', cancelled:'gray' };
+  el.innerHTML = d.bills.map(b => `
+    <div class="bill-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div><div style="font-size:14px;font-weight:600">${b.invoice_no}</div>
+        <div style="font-size:11px;color:var(--text-xs)">${b.date}</div></div>
+        <span class="badge badge-${sc[b.status]||'gray'}">${b.status}</span>
+      </div>
+      <div style="margin-top:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center">
+        <div><div style="font-size:10px;color:var(--text-xs)">Total</div><div style="font-weight:600">₹${b.total.toFixed(2)}</div></div>
+        <div><div style="font-size:10px;color:var(--text-xs)">Paid</div><div style="font-weight:600;color:var(--teal)">₹${b.paid.toFixed(2)}</div></div>
+        <div><div style="font-size:10px;color:var(--text-xs)">Balance</div><div style="font-weight:600;color:${b.balance>0?'var(--red)':'var(--teal)'}">₹${b.balance.toFixed(2)}</div></div>
+      </div>
+    </div>`).join('');
+}
+
+function loadProfilePage() {
+  if (!patientData) { return; }
+  const p = patientData;
+  document.getElementById('profile-personal').innerHTML = `
+    <div class="info-row"><span class="info-label">Full Name</span><span class="info-val">${p.full_name}</span></div>
+    <div class="info-row"><span class="info-label">UHID</span><span class="info-val" style="font-family:monospace">${p.uhid}</span></div>
+    <div class="info-row"><span class="info-label">Date of Birth</span><span class="info-val">${p.date_of_birth||'—'}</span></div>
+    <div class="info-row"><span class="info-label">Age</span><span class="info-val">${p.age||'—'} years</span></div>
+    <div class="info-row"><span class="info-label">Gender</span><span class="info-val" style="text-transform:capitalize">${p.gender||'—'}</span></div>
+    <div class="info-row"><span class="info-label">Phone</span><span class="info-val">${p.phone||'—'}</span></div>
+    <div class="info-row"><span class="info-label">Email</span><span class="info-val">${p.email||'—'}</span></div>
+    <div class="info-row"><span class="info-label">Address</span><span class="info-val" style="text-align:right;max-width:180px">${p.address||'—'}</span></div>`;
+  document.getElementById('profile-health').innerHTML = `
+    <div class="info-row"><span class="info-label">Blood Group</span><span class="info-val"><span class="badge badge-red">${p.blood_group||'Unknown'}</span></span></div>
+    <div class="info-row"><span class="info-label">Insurance</span><span class="info-val">${p.insurance_provider||'None'}</span></div>
+    <div style="margin-top:12px"><div style="font-size:11px;font-weight:600;color:var(--text-xs);text-transform:uppercase;margin-bottom:8px">Allergies</div>
+    ${p.allergies.length ? p.allergies.map(a=>`<span class="badge badge-red" style="margin-right:4px;margin-bottom:4px">${a.allergen}</span>`).join('') : '<span class="badge badge-gray">None known</span>'}</div>
+    <div style="margin-top:12px"><div style="font-size:11px;font-weight:600;color:var(--text-xs);text-transform:uppercase;margin-bottom:8px">Chronic Conditions</div>
+    ${p.conditions.length ? p.conditions.map(c=>`<span class="badge badge-amber" style="margin-right:4px;margin-bottom:4px">${c.condition}</span>`).join('') : '<span class="badge badge-gray">None</span>'}</div>`;
+}
+
+async function loadNotifications() {
+  const r = await fetch('/patient/api/notifications');
+  const d = await r.json();
+  const el = document.getElementById('notif-list');
+  if (!d.notifications.length) { el.innerHTML = '<div class="empty">No notifications</div>'; return; }
+  const tc = { info:'blue', success:'teal', warning:'amber', danger:'red' };
+  el.innerHTML = d.notifications.map(n => `
+    <div class="notif-item ${n.is_read?'':'unread'}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div class="notif-title">${n.title}</div>
+        <span class="badge badge-${tc[n.notif_type]||'gray'}">${n.notif_type}</span>
+      </div>
+      <div class="notif-msg">${n.message||''}</div>
+    </div>`).join('');
+}
+
+async function markAllRead() {
+  await fetch('/patient/api/notifications/mark-read', {method:'POST'});
+  loadNotifications();
+}
+
+function toggleTheme() {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', dark?'':'dark');
+  localStorage.setItem('theme', dark?'light':'dark');
+}
+</script>
+</body>
+</html>

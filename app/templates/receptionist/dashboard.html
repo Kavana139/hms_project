@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Receptionist — MediCore HMS</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue:#1a6fc4;--blue-light:#e8f1fb;--blue-dark:#155fa0;
+  --teal:#0f9e75;--teal-light:#e1f5ee;
+  --amber:#b45309;--amber-light:#fef3c7;
+  --red:#dc2626;--red-light:#fef2f2;
+  --green:#15803d;--green-light:#f0fdf4;
+  --purple:#7c3aed;--purple-light:#f5f3ff;
+  --gray:#6b7280;--border:#e5e7eb;
+  --sidebar-w:220px;--bg:#f1f5f9;--white:#fff;
+  --text:#1e293b;--text-sm:#64748b;--text-xs:#94a3b8;--radius:10px;
+}
+[data-theme=dark]{
+  --bg:#0f172a;--white:#1e293b;--text:#f1f5f9;--text-sm:#94a3b8;
+  --text-xs:#64748b;--border:#334155;--blue-light:#1e3a5f;
+  --teal-light:#0d3324;--amber-light:#451a03;--red-light:#450a0a;--green-light:#052e16;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+     background:var(--bg);color:var(--text);display:flex;min-height:100vh}
+#sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--white);
+         border-right:1px solid var(--border);display:flex;flex-direction:column;
+         position:fixed;top:0;left:0;height:100vh;z-index:100;overflow-y:auto}
+.sidebar-brand{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.brand-icon{width:32px;height:32px;background:var(--purple);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.brand-icon svg{width:16px;height:16px;fill:white}
+.brand-name{font-size:14px;font-weight:700}
+.brand-sub{font-size:10px;color:var(--text-xs)}
+.nav-section{font-size:10px;font-weight:600;color:var(--text-xs);text-transform:uppercase;letter-spacing:.08em;padding:12px 16px 4px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 12px;margin:1px 8px;border-radius:7px;cursor:pointer;font-size:13px;color:var(--text-sm);transition:all .15s;text-decoration:none}
+.nav-item:hover{background:var(--bg);color:var(--text)}
+.nav-item.active{background:var(--purple-light);color:var(--purple);font-weight:500}
+.nav-item svg{width:15px;height:15px;flex-shrink:0}
+.sidebar-footer{margin-top:auto;padding:12px;border-top:1px solid var(--border)}
+.user-card{display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;cursor:pointer}
+.user-card:hover{background:var(--bg)}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--purple);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;flex-shrink:0}
+.user-name{font-size:12px;font-weight:500}
+.user-role{font-size:10px;color:var(--text-xs)}
+#main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column}
+#topbar{background:var(--white);border-bottom:1px solid var(--border);height:54px;display:flex;align-items:center;padding:0 20px;gap:10px;position:sticky;top:0;z-index:50}
+.topbar-title{font-size:15px;font-weight:600;flex:1}
+.topbar-btn{width:32px;height:32px;border-radius:7px;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-sm)}
+.topbar-btn:hover{background:var(--bg)}
+.topbar-btn svg{width:17px;height:17px}
+.live-badge{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--teal);background:var(--teal-light);padding:4px 10px;border-radius:20px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+#content{padding:20px;flex:1}
+.page{display:none}
+.page.active{display:block;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.kpi{background:var(--white);border-radius:var(--radius);padding:14px 16px;border:1px solid var(--border)}
+.kpi-label{font-size:10px;font-weight:600;color:var(--text-xs);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.kpi-value{font-size:24px;font-weight:700;line-height:1}
+.kpi-sub{font-size:11px;color:var(--text-xs);margin-top:4px}
+.card{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;margin-bottom:16px}
+.card-hdr{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:13px;font-weight:600}
+.card-body{padding:16px}
+.two-col{display:grid;grid-template-columns:1fr 1.2fr;gap:16px}
+.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:500}
+.badge-blue{background:var(--blue-light);color:var(--blue)}
+.badge-teal{background:var(--teal-light);color:var(--teal)}
+.badge-amber{background:var(--amber-light);color:var(--amber)}
+.badge-red{background:var(--red-light);color:var(--red)}
+.badge-green{background:var(--green-light);color:var(--green)}
+.badge-purple{background:var(--purple-light);color:var(--purple)}
+.badge-gray{background:var(--bg);color:var(--gray)}
+.btn{padding:8px 14px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all .15s;display:inline-flex;align-items:center;gap:5px}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:var(--blue-dark)}
+.btn-purple{background:var(--purple);color:#fff}
+.btn-teal{background:var(--teal);color:#fff}
+.btn-outline{background:none;border:1px solid var(--border);color:var(--text)}
+.btn-outline:hover{background:var(--bg)}
+.btn-sm{padding:5px 10px;font-size:11px}
+.btn-danger{background:var(--red);color:#fff}
+.btn svg{width:13px;height:13px}
+.form-group{margin-bottom:12px}
+.form-group label{display:block;font-size:11px;font-weight:500;color:var(--text-sm);margin-bottom:4px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;color:var(--text);background:var(--white);outline:none;transition:border-color .15s}
+.form-group input:focus,.form-group select:focus{border-color:var(--blue)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+table{width:100%;border-collapse:collapse}
+th{padding:9px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--text-xs);text-transform:uppercase;letter-spacing:.05em;background:var(--bg);border-bottom:1px solid var(--border)}
+td{padding:10px 14px;font-size:13px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg)}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-bg.open{display:flex}
+.modal{background:var(--white);border-radius:14px;width:100%;max-width:560px;max-height:92vh;overflow-y:auto;animation:mIn .2s ease}
+@keyframes mIn{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-hdr{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:14px;font-weight:600}
+.modal-close{background:none;border:none;cursor:pointer;color:var(--text-sm);width:26px;height:26px;border-radius:5px;font-size:16px}
+.modal-close:hover{background:var(--bg)}
+.modal-body{padding:18px}
+.modal-foot{padding:12px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+.search-wrap{position:relative}
+.search-wrap input{width:100%;padding:8px 10px 8px 32px;border:1px solid var(--border);border-radius:7px;font-size:13px;background:var(--white);color:var(--text);outline:none}
+.search-wrap input:focus{border-color:var(--blue)}
+.search-wrap svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--text-xs)}
+.search-dropdown{position:absolute;top:100%;left:0;right:0;background:var(--white);border:1px solid var(--border);border-top:none;border-radius:0 0 7px 7px;max-height:220px;overflow-y:auto;z-index:50;display:none;box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.search-dropdown.open{display:block}
+.search-opt{padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.search-opt:last-child{border-bottom:none}
+.search-opt:hover{background:var(--bg)}
+.search-opt-sub{font-size:11px;color:var(--text-xs)}
+.slot-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.slot-btn{padding:7px 4px;border:1px solid var(--border);border-radius:6px;font-size:11px;text-align:center;cursor:pointer;transition:all .15s;background:var(--white);color:var(--text)}
+.slot-btn:hover:not(.booked){background:var(--blue-light);border-color:var(--blue);color:var(--blue)}
+.slot-btn.selected{background:var(--blue);color:#fff;border-color:var(--blue)}
+.slot-btn.booked{background:var(--bg);color:var(--text-xs);cursor:not-allowed;text-decoration:line-through}
+.bed-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.bed-card{border-radius:8px;padding:10px 6px;text-align:center;cursor:pointer;font-size:10px;font-weight:500;transition:transform .15s;border:1px solid transparent}
+.bed-card:hover{transform:scale(1.04)}
+.bed-card.available{background:var(--teal-light);color:var(--teal);border-color:#9fe1cb}
+.bed-card.occupied{background:var(--red-light);color:var(--red);border-color:#fca5a5}
+.bed-card.cleaning{background:var(--amber-light);color:var(--amber);border-color:#fcd34d}
+.bed-card.reserved{background:var(--blue-light);color:var(--blue);border-color:#93c5fd}
+.bed-card.maintenance{background:var(--bg);color:var(--text-xs)}
+.bed-no{font-size:12px;font-weight:600;margin-bottom:2px}
+.bill-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.bill-total{display:flex;justify-content:space-between;padding:10px 0;font-size:14px;font-weight:600;margin-top:4px}
+.success-box{background:var(--teal-light);border-radius:8px;padding:14px;border:1px solid #9fe1cb;margin-top:10px}
+.success-box .title{font-size:13px;font-weight:600;color:var(--teal);margin-bottom:6px}
+.info-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+.info-label{color:var(--text-xs)}
+.divider{height:1px;background:var(--border);margin:12px 0}
+.empty{text-align:center;padding:32px;color:var(--text-xs);font-size:13px}
+.loading{text-align:center;padding:20px;color:var(--text-xs);font-size:12px}
+.flex{display:flex;align-items:center}
+.gap-2{gap:8px}
+.ml-auto{margin-left:auto}
+.fw{font-weight:500}
+.alert{padding:10px 14px;border-radius:7px;font-size:12px;margin-bottom:10px;display:none}
+.alert.show{display:block}
+.alert-success{background:var(--teal-light);color:var(--teal);border-left:3px solid var(--teal)}
+.alert-error{background:var(--red-light);color:var(--red);border-left:3px solid var(--red)}
+</style>
+</head>
+<body>
+<div id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2zm1 14h-2v-4H8l4-7 4 7h-3v4z"/></svg></div>
+    <div><div class="brand-name">MediCore HMS</div><div class="brand-sub">Receptionist</div></div>
+  </div>
+  <div class="nav-section">Front Desk</div>
+  <a class="nav-item active" onclick="showPage('overview')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Overview
+  </a>
+  <a class="nav-item" onclick="showPage('patients')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Patients
+  </a>
+  <a class="nav-item" onclick="showPage('appointments')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Appointments
+  </a>
+  <a class="nav-item" onclick="showPage('book')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Book Appointment
+  </a>
+  <div class="nav-section">Ward</div>
+  <a class="nav-item" onclick="showPage('beds')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20v-8a2 2 0 012-2h16a2 2 0 012 2v8"/></svg>Bed Map
+  </a>
+  <a class="nav-item" onclick="showPage('admit')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>Admit Patient
+  </a>
+  <div class="nav-section">Billing</div>
+  <a class="nav-item" onclick="showPage('billing')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>Quick Bill
+  </a>
+  <div class="sidebar-footer">
+    <div class="user-card" onclick="window.location='/auth/logout'">
+      <div class="avatar">RC</div>
+      <div><div class="user-name">Receptionist</div><div class="user-role">Front Desk</div></div>
+    </div>
+  </div>
+</div>
+
+<div id="main">
+  <div id="topbar">
+    <div class="topbar-title" id="page-title">Overview</div>
+    <div class="live-badge"><span class="live-dot"></span>Live</div>
+    <button class="topbar-btn" onclick="toggleTheme()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg>
+    </button>
+    <a href="/auth/logout" class="topbar-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+    </a>
+  </div>
+
+  <div id="content">
+
+    <!-- OVERVIEW -->
+    <div class="page active" id="page-overview">
+      <div class="stat-row">
+        <div class="kpi"><div class="kpi-label">Today's Appointments</div><div class="kpi-value" id="s-appts">—</div></div>
+        <div class="kpi"><div class="kpi-label">Checked In</div><div class="kpi-value" id="s-checkedin" style="color:var(--amber)">—</div></div>
+        <div class="kpi"><div class="kpi-label">Completed</div><div class="kpi-value" id="s-done" style="color:var(--teal)">—</div></div>
+        <div class="kpi"><div class="kpi-label">Beds Available</div><div class="kpi-value" id="s-beds" style="color:var(--blue)">—</div></div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-hdr">
+            <div class="card-title">Today's Queue</div>
+            <button class="btn btn-outline btn-sm" onclick="loadTodayAppts()">↻</button>
+          </div>
+          <div id="today-queue"><div class="loading">Loading...</div></div>
+        </div>
+        <div class="card">
+          <div class="card-hdr"><div class="card-title">Quick Patient Search</div></div>
+          <div class="card-body">
+            <div class="search-wrap" style="margin-bottom:14px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input type="text" id="quick-search" placeholder="Name, UHID or phone..." oninput="quickSearch()"/>
+              <div class="search-dropdown" id="quick-dropdown"></div>
+            </div>
+            <div id="quick-result"><div class="empty">Search to find a patient</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PATIENTS -->
+    <div class="page" id="page-patients">
+      <div class="card">
+        <div class="card-hdr">
+          <div class="card-title">Patient Registration</div>
+          <button class="btn btn-purple" onclick="openRegister()">+ New Patient</button>
+        </div>
+        <div class="card-body">
+          <div class="search-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="pt-search" placeholder="Search patient by name, UHID, phone..." oninput="searchPatients()"/>
+            <div class="search-dropdown" id="pt-dropdown"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card" id="patient-detail-card" style="display:none">
+        <div class="card-hdr">
+          <div class="card-title" id="pt-detail-name">Patient Details</div>
+          <button class="btn btn-teal btn-sm" onclick="bookForPatient()">Book Appointment</button>
+        </div>
+        <div class="card-body" id="pt-detail-body"></div>
+      </div>
+    </div>
+
+    <!-- APPOINTMENTS -->
+    <div class="page" id="page-appointments">
+      <div class="card">
+        <div class="card-hdr">
+          <div class="card-title">Today's Appointments</div>
+          <button class="btn btn-outline btn-sm" onclick="loadTodayAppts()">↻ Refresh</button>
+        </div>
+        <table>
+          <thead><tr><th>Token</th><th>Patient</th><th>Doctor</th><th>Time</th><th>Type</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="appts-tbody"><tr><td colspan="7" class="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- BOOK APPOINTMENT -->
+    <div class="page" id="page-book">
+      <div class="two-col" style="align-items:start">
+        <div class="card">
+          <div class="card-hdr"><div class="card-title">Book New Appointment</div></div>
+          <div class="card-body">
+            <div id="book-alert" class="alert"></div>
+
+            <!-- Step 1: Patient -->
+            <div style="font-size:11px;font-weight:600;color:var(--text-xs);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Step 1 — Select Patient</div>
+            <div class="form-group">
+              <div class="search-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <input type="text" id="book-pt-search" placeholder="Search by name, UHID or phone..." oninput="bookPatientSearch()"/>
+                <div class="search-dropdown" id="book-pt-dropdown"></div>
+              </div>
+              <input type="hidden" id="book-pt-id"/>
+              <div id="book-pt-selected" style="font-size:12px;color:var(--teal);margin-top:5px;font-weight:500"></div>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="openRegister()" style="margin-bottom:16px;width:100%">
+              + Register New Patient Instead
+            </button>
+
+            <div class="divider"></div>
+
+            <!-- Step 2: Doctor -->
+            <div style="font-size:11px;font-weight:600;color:var(--text-xs);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Step 2 — Select Doctor</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Department</label>
+                <select id="book-dept" onchange="loadDeptDoctors()">
+                  <option value="">All Departments</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Doctor *</label>
+                <select id="book-doctor" onchange="onDoctorChange()">
+                  <option value="">Select doctor</option>
+                </select>
+              </div>
+            </div>
+            <!-- Doctor availability info -->
+            <div id="doctor-avail-info" style="display:none;background:var(--bg);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12px">
+              <div style="font-weight:600;margin-bottom:4px">Available Days:</div>
+              <div id="doctor-days" style="color:var(--teal)"></div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Step 3: Date & Slot -->
+            <div style="font-size:11px;font-weight:600;color:var(--text-xs);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Step 3 — Pick Date & Time Slot</div>
+            <div class="form-group">
+              <label>Date *</label>
+              <input type="date" id="book-date" onchange="loadSlots()" min=""/>
+            </div>
+            <!-- Slots section -->
+            <div id="slots-section" style="margin-bottom:14px">
+              <div id="slots-info" style="font-size:12px;color:var(--text-xs);padding:8px;background:var(--bg);border-radius:6px">
+                Select a doctor and date to see available slots
+              </div>
+              <div id="slot-grid" class="slot-grid" style="margin-top:8px"></div>
+              <input type="hidden" id="book-time"/>
+              <div id="selected-slot-display" style="font-size:12px;color:var(--blue);font-weight:600;margin-top:6px;display:none">
+                ✓ Selected: <span id="selected-slot-text"></span>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Step 4: Details -->
+            <div style="font-size:11px;font-weight:600;color:var(--text-xs);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Step 4 — Details</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Visit Type</label>
+                <select id="book-type">
+                  <option value="new">New Patient</option>
+                  <option value="follow_up">Follow-up</option>
+                  <option value="emergency">Emergency</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Reason for Visit</label>
+                <input type="text" id="book-reason" placeholder="Brief reason..."/>
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="confirmBooking()" style="width:100%;padding:12px;font-size:14px">
+              ✓ Confirm Booking
+            </button>
+          </div>
+        </div>
+
+        <div class="card" id="booking-result-card" style="display:none">
+          <div class="card-hdr"><div class="card-title">✓ Booking Confirmed</div></div>
+          <div class="card-body" id="booking-result-body"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BED MAP -->
+    <div class="page" id="page-beds">
+      <div class="stat-row" style="grid-template-columns:repeat(4,1fr)">
+        <div class="kpi" style="border-left:4px solid var(--teal)"><div class="kpi-label">Available</div><div class="kpi-value" id="b-avail" style="color:var(--teal)">—</div></div>
+        <div class="kpi" style="border-left:4px solid var(--red)"><div class="kpi-label">Occupied</div><div class="kpi-value" id="b-occ" style="color:var(--red)">—</div></div>
+        <div class="kpi" style="border-left:4px solid var(--amber)"><div class="kpi-label">Cleaning</div><div class="kpi-value" id="b-clean" style="color:var(--amber)">—</div></div>
+        <div class="kpi" style="border-left:4px solid var(--blue)"><div class="kpi-label">Reserved</div><div class="kpi-value" id="b-res" style="color:var(--blue)">—</div></div>
+      </div>
+      <div id="ward-sections"></div>
+    </div>
+
+    <!-- ADMIT PATIENT -->
+    <div class="page" id="page-admit">
+      <div class="card" style="max-width:600px">
+        <div class="card-hdr"><div class="card-title">Admit Patient (IPD)</div></div>
+        <div class="card-body">
+          <div id="admit-alert" class="alert"></div>
+          <div class="form-group">
+            <label>Patient *</label>
+            <div class="search-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input type="text" id="admit-pt-search" placeholder="Search patient..." oninput="admitPatientSearch()"/>
+              <div class="search-dropdown" id="admit-pt-dropdown"></div>
+            </div>
+            <input type="hidden" id="admit-pt-id"/>
+            <div id="admit-pt-name" style="font-size:11px;color:var(--teal);margin-top:4px"></div>
+          </div>
+          <div class="form-group">
+            <label>Doctor *</label>
+            <select id="admit-doctor"><option value="">Select doctor</option></select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Ward *</label>
+              <select id="admit-ward" onchange="loadWardBeds()"><option value="">Select ward</option></select>
+            </div>
+            <div class="form-group">
+              <label>Bed *</label>
+              <select id="admit-bed"><option value="">Select bed</option></select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Reason for Admission</label>
+            <input type="text" id="admit-reason" placeholder="Diagnosis / Reason..."/>
+          </div>
+          <button class="btn btn-primary" onclick="submitAdmission()" style="width:100%">Admit Patient</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BILLING -->
+    <div class="page" id="page-billing">
+      <div class="two-col" style="align-items:start">
+        <div class="card">
+          <div class="card-hdr"><div class="card-title">Create Quick Bill</div></div>
+          <div class="card-body">
+            <div id="bill-alert" class="alert"></div>
+            <div class="form-group">
+              <label>Patient *</label>
+              <div class="search-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <input type="text" id="bill-pt-search" placeholder="Search patient..." oninput="billPatientSearch()"/>
+                <div class="search-dropdown" id="bill-pt-dropdown"></div>
+              </div>
+              <input type="hidden" id="bill-pt-id"/>
+              <div id="bill-pt-name" style="font-size:11px;color:var(--teal);margin-top:4px"></div>
+            </div>
+            <div class="divider"></div>
+            <div class="form-row-3">
+              <div class="form-group"><label>Description</label><input type="text" id="bi-desc" placeholder="Service name"/></div>
+              <div class="form-group"><label>Amount (₹)</label><input type="number" id="bi-amt" placeholder="0"/></div>
+              <div class="form-group"><label>Type</label>
+                <select id="bi-type">
+                  <option value="consultation">Consultation</option>
+                  <option value="lab">Lab</option>
+                  <option value="radiology">Radiology</option>
+                  <option value="pharmacy">Pharmacy</option>
+                  <option value="room">Room Charge</option>
+                  <option value="procedure">Procedure</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="addBillItem()" style="margin-bottom:14px">+ Add Item</button>
+            <div id="bill-items"></div>
+            <button class="btn btn-primary" onclick="generateBill()" style="width:100%;margin-top:8px">Generate Invoice</button>
+          </div>
+        </div>
+        <div class="card" id="invoice-result" style="display:none">
+          <div class="card-hdr"><div class="card-title">Invoice Generated</div></div>
+          <div class="card-body" id="invoice-body"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- REGISTER PATIENT MODAL -->
+<div class="modal-bg" id="modal-register">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title">Register New Patient</div>
+      <button class="modal-close" onclick="closeModal('modal-register')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>First Name *</label><input type="text" id="r-fname"/></div>
+        <div class="form-group"><label>Last Name *</label><input type="text" id="r-lname"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Phone *</label><input type="text" id="r-phone"/></div>
+        <div class="form-group"><label>Gender *</label>
+          <select id="r-gender"><option value="">Select</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Date of Birth</label><input type="date" id="r-dob"/></div>
+        <div class="form-group"><label>Blood Group</label>
+          <select id="r-blood">
+            <option value="unknown">Unknown</option>
+            <option value="A+">A+</option><option value="A-">A-</option>
+            <option value="B+">B+</option><option value="B-">B-</option>
+            <option value="O+">O+</option><option value="O-">O-</option>
+            <option value="AB+">AB+</option><option value="AB-">AB-</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Email</label><input type="email" id="r-email"/></div>
+        <div class="form-group"><label>Emergency Phone</label><input type="text" id="r-emergency"/></div>
+      </div>
+      <div class="form-group"><label>Address</label><input type="text" id="r-address"/></div>
+      <div class="form-row">
+        <div class="form-group"><label>City</label><input type="text" id="r-city"/></div>
+        <div class="form-group"><label>State</label><input type="text" id="r-state"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Insurance Provider</label><input type="text" id="r-ins"/></div>
+        <div class="form-group"><label>Insurance ID</label><input type="text" id="r-insid"/></div>
+      </div>
+      <div id="reg-result" style="display:none" class="success-box">
+        <div class="title">✓ Patient Registered!</div>
+        <div class="info-row"><span class="info-label">UHID</span><span id="reg-uhid" style="font-weight:600;font-family:monospace"></span></div>
+        <div class="info-row"><span class="info-label">Name</span><span id="reg-name" style="font-weight:600"></span></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('modal-register')">Close</button>
+      <button class="btn btn-purple" id="reg-btn" onclick="registerPatient()">Register Patient</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────
+let billItems  = [];
+let departments = [];
+let allDoctors  = [];
+let selectedBookPatient = null;
+let selectedAdmitPatient = null;
+let selectedBillPatient  = null;
+
+// ── Init ──────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('book-date').min   = today;
+  document.getElementById('book-date').value = today;
+  loadStats();
+  loadTodayAppts();
+  loadDepartments();
+  loadAdmitData();
+  setInterval(loadStats, 30000);
+  setInterval(loadTodayAppts, 60000);
+  const saved = localStorage.getItem('theme');
+  if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+});
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+  const titles = {overview:'Overview', patients:'Patients', appointments:'Appointments',
+                  book:'Book Appointment', beds:'Bed Map', admit:'Admit Patient', billing:'Quick Bill'};
+  document.getElementById('page-title').textContent = titles[name] || name;
+  if (name === 'appointments') loadFullAppts();
+  if (name === 'beds') loadBeds();
+}
+
+// ── Stats ─────────────────────────────────────────────────────
+async function loadStats() {
+  const r = await fetch('/receptionist/api/stats');
+  const d = await r.json();
+  if (!d.success) return;
+  const s = d.stats;
+  document.getElementById('s-appts').textContent     = s.appointments_today;
+  document.getElementById('s-checkedin').textContent = s.checked_in;
+  document.getElementById('s-done').textContent      = s.completed;
+  document.getElementById('s-beds').textContent      = s.beds_available;
+}
+
+// ── Today Queue ───────────────────────────────────────────────
+async function loadTodayAppts() {
+  const r = await fetch('/receptionist/api/appointments/today');
+  const d = await r.json();
+  const queue = document.getElementById('today-queue');
+  const tbody = document.getElementById('appts-tbody');
+  if (!d.appointments.length) {
+    queue.innerHTML = '<div class="empty">No appointments today</div>';
+    if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="empty">No appointments today</td></tr>';
+    return;
+  }
+  const sc = {scheduled:'gray',confirmed:'blue',checked_in:'amber',in_progress:'teal',completed:'green',no_show:'red',cancelled:'red'};
+  queue.innerHTML = d.appointments.slice(0,8).map(a => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)">
+      <div style="width:28px;height:28px;border-radius:50%;background:var(--blue-light);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0">${a.token||'—'}</div>
+      <div style="flex:1"><div style="font-size:13px;font-weight:500">${a.patient_name}</div><div style="font-size:11px;color:var(--text-xs)">${a.doctor_name} · ${a.time}</div></div>
+      <span class="badge badge-${sc[a.status]||'gray'}">${a.status.replace('_',' ')}</span>
+      ${a.status==='confirmed'?`<button class="btn btn-sm btn-teal" onclick="checkIn(${a.id})">Check In</button>`:''}
+    </div>`).join('');
+  if (tbody) {
+    tbody.innerHTML = d.appointments.map(a => `
+      <tr>
+        <td style="font-weight:600">${a.token||'—'}</td>
+        <td><div class="fw">${a.patient_name}</div><div style="font-size:10px;color:var(--text-xs)">${a.patient_uhid}</div></td>
+        <td>${a.doctor_name}</td>
+        <td>${a.time}</td>
+        <td><span class="badge badge-blue">${a.type}</span></td>
+        <td><span class="badge badge-${sc[a.status]||'gray'}">${a.status.replace('_',' ')}</span></td>
+        <td>
+          ${a.status==='confirmed'?`<button class="btn btn-sm btn-teal" onclick="checkIn(${a.id})">Check In</button>`:''}
+          ${['scheduled','confirmed'].includes(a.status)?`<button class="btn btn-sm btn-outline" onclick="cancelAppt(${a.id})" style="color:var(--red)">Cancel</button>`:''}
+        </td>
+      </tr>`).join('');
+  }
+  loadStats();
+}
+
+async function loadFullAppts() { await loadTodayAppts(); }
+
+async function checkIn(id) {
+  const r = await fetch(`/receptionist/api/appointments/${id}/checkin`, {method:'POST'});
+  const d = await r.json();
+  if (d.success) { loadTodayAppts(); showAlert('Patient checked in!', 'success'); }
+  else alert(d.message);
+}
+
+async function cancelAppt(id) {
+  if (!confirm('Cancel this appointment?')) return;
+  const r = await fetch(`/receptionist/api/appointments/${id}/cancel`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({reason:'Cancelled by receptionist'})
+  });
+  const d = await r.json();
+  if (d.success) loadTodayAppts();
+}
+
+// ── Patient Search ────────────────────────────────────────────
+let searchTimers = {};
+function makeSearchFn(inputId, dropdownId, onSelect) {
+  return async function() {
+    clearTimeout(searchTimers[inputId]);
+    const q  = document.getElementById(inputId).value.trim();
+    const dd = document.getElementById(dropdownId);
+    if (q.length < 2) { dd.classList.remove('open'); return; }
+    searchTimers[inputId] = setTimeout(async () => {
+      const r = await fetch(`/receptionist/api/patients/search?q=${encodeURIComponent(q)}`);
+      const d = await r.json();
+      if (!d.patients.length) { dd.classList.remove('open'); return; }
+      dd.innerHTML = d.patients.map(p => `
+        <div class="search-opt" onclick='(${onSelect.toString()})(${JSON.stringify(p)})'>
+          <div><div>${p.full_name}</div><div class="search-opt-sub">${p.uhid} · ${p.phone||''}</div></div>
+          <span class="badge badge-${p.gender==='male'?'blue':'purple'}">${(p.gender||'?').charAt(0).toUpperCase()}</span>
+        </div>`).join('');
+      dd.classList.add('open');
+    }, 300);
+  };
+}
+
+function quickSearch() {
+  makeSearchFn('quick-search','quick-dropdown', function(p) {
+    document.getElementById('quick-search').value = '';
+    document.getElementById('quick-dropdown').classList.remove('open');
+    document.getElementById('quick-result').innerHTML = `
+      <div style="padding:12px;background:var(--bg);border-radius:8px">
+        <div style="font-size:14px;font-weight:600;margin-bottom:8px">${p.full_name}</div>
+        <div style="font-size:12px;color:var(--text-sm);margin-bottom:4px">UHID: ${p.uhid}</div>
+        <div style="font-size:12px;color:var(--text-sm);margin-bottom:4px">Phone: ${p.phone||'—'}</div>
+        <div style="font-size:12px;color:var(--text-sm);margin-bottom:8px">Blood: ${p.blood_group||'?'} · ${p.gender||'?'}</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-sm btn-primary" onclick="bookForPatientId(${p.id})">Book Appt</button>
+          <button class="btn btn-sm btn-outline" onclick="viewPatient(${p.id})">View</button>
+        </div>
+      </div>`;
+  })();
+}
+
+function searchPatients() { makeSearchFn('pt-search','pt-dropdown', selectPatientDetail)(); }
+function bookPatientSearch() { makeSearchFn('book-pt-search','book-pt-dropdown', function(p){
+  selectedBookPatient = p;
+  document.getElementById('book-pt-id').value = p.id;
+  document.getElementById('book-pt-search').value = p.full_name;
+  document.getElementById('book-pt-selected').textContent = `✓ ${p.uhid}`;
+  document.getElementById('book-pt-dropdown').classList.remove('open');
+})(); }
+function admitPatientSearch() { makeSearchFn('admit-pt-search','admit-pt-dropdown', function(p){
+  selectedAdmitPatient = p;
+  document.getElementById('admit-pt-id').value = p.id;
+  document.getElementById('admit-pt-search').value = p.full_name;
+  document.getElementById('admit-pt-name').textContent = `✓ ${p.uhid}`;
+  document.getElementById('admit-pt-dropdown').classList.remove('open');
+})(); }
+function billPatientSearch() { makeSearchFn('bill-pt-search','bill-pt-dropdown', function(p){
+  selectedBillPatient = p;
+  document.getElementById('bill-pt-id').value = p.id;
+  document.getElementById('bill-pt-search').value = p.full_name;
+  document.getElementById('bill-pt-name').textContent = `✓ ${p.uhid}`;
+  document.getElementById('bill-pt-dropdown').classList.remove('open');
+})(); }
+
+async function selectPatientDetail(p) {
+  document.getElementById('pt-search').value = p.full_name;
+  document.getElementById('pt-dropdown').classList.remove('open');
+  const r = await fetch(`/receptionist/api/patients/${p.id}`);
+  const d = await r.json();
+  if (!d.success) return;
+  const pt = d.patient;
+  document.getElementById('patient-detail-card').style.display = 'block';
+  document.getElementById('pt-detail-name').textContent = pt.full_name;
+  document.getElementById('pt-detail-body').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div>
+        <div style="font-size:11px;color:var(--text-xs);margin-bottom:2px">UHID</div><div class="fw">${pt.uhid}</div>
+        <div style="font-size:11px;color:var(--text-xs);margin:8px 0 2px">Age / Gender</div><div class="fw">${pt.age||'?'} yrs · ${pt.gender||'?'}</div>
+        <div style="font-size:11px;color:var(--text-xs);margin:8px 0 2px">Phone</div><div class="fw">${pt.phone||'—'}</div>
+        <div style="font-size:11px;color:var(--text-xs);margin:8px 0 2px">Blood Group</div><div class="fw">${pt.blood_group||'?'}</div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text-xs);margin-bottom:2px">Email</div><div class="fw">${pt.email||'—'}</div>
+        <div style="font-size:11px;color:var(--text-xs);margin:8px 0 2px">Address</div><div class="fw">${pt.address||'—'}, ${pt.city||''}</div>
+        <div style="font-size:11px;color:var(--text-xs);margin:8px 0 2px">Insurance</div><div class="fw">${pt.insurance_provider||'None'}</div>
+      </div>
+    </div>
+    ${pt.recent_appointments.length ? `<div class="divider"></div>
+    <div style="font-size:11px;font-weight:600;color:var(--text-xs);text-transform:uppercase;margin-bottom:8px">Recent Visits</div>
+    ${pt.recent_appointments.map(a=>`<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>${a.date} — ${a.doctor}</span><span class="badge badge-gray">${a.status}</span></div>`).join('')}` : ''}`;
+}
+
+async function viewPatient(id) {
+  const r = await fetch(`/receptionist/api/patients/${id}`);
+  const d = await r.json();
+  if (d.success) selectPatientDetail(d.patient);
+  showPage2('patients');
+}
+
+function bookForPatient() { showPage2('book'); }
+function bookForPatientId(id) {
+  fetch(`/receptionist/api/patients/${id}`).then(r=>r.json()).then(d=>{
+    if (d.success) {
+      selectedBookPatient = d.patient;
+      document.getElementById('book-pt-id').value = d.patient.id;
+      document.getElementById('book-pt-search').value = d.patient.full_name;
+      document.getElementById('book-pt-selected').textContent = `✓ ${d.patient.uhid}`;
+      showPage2('book');
+    }
+  });
+}
+
+function showPage2(name) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.getElementById('page-title').textContent = name.charAt(0).toUpperCase()+name.slice(1);
+}
+
+// ── Register Patient ──────────────────────────────────────────
+function openRegister() {
+  document.getElementById('reg-result').style.display = 'none';
+  document.getElementById('reg-btn').style.display = 'inline-flex';
+  ['r-fname','r-lname','r-phone','r-email','r-emergency','r-address','r-city','r-state','r-ins','r-insid'].forEach(id=>{
+    document.getElementById(id).value='';
+  });
+  document.getElementById('r-gender').value = '';
+  document.getElementById('r-blood').value  = 'unknown';
+  document.getElementById('modal-register').classList.add('open');
+}
+
+async function registerPatient() {
+  const data = {
+    first_name:        document.getElementById('r-fname').value.trim(),
+    last_name:         document.getElementById('r-lname').value.trim(),
+    phone:             document.getElementById('r-phone').value.trim(),
+    gender:            document.getElementById('r-gender').value,
+    date_of_birth:     document.getElementById('r-dob').value,
+    blood_group:       document.getElementById('r-blood').value,
+    email:             document.getElementById('r-email').value.trim(),
+    emergency_phone:   document.getElementById('r-emergency').value.trim(),
+    address:           document.getElementById('r-address').value.trim(),
+    city:              document.getElementById('r-city').value.trim(),
+    state:             document.getElementById('r-state').value.trim(),
+    insurance_provider:document.getElementById('r-ins').value.trim(),
+    insurance_id:      document.getElementById('r-insid').value.trim(),
+  };
+  const btn = document.getElementById('reg-btn');
+  btn.disabled = true; btn.textContent = 'Registering...';
+  const r = await fetch('/receptionist/api/patients/register', {
+    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)
+  });
+  const d = await r.json();
+  btn.disabled = false; btn.textContent = 'Register Patient';
+  if (d.success) {
+    document.getElementById('reg-uhid').textContent = d.patient.uhid;
+    document.getElementById('reg-name').textContent = d.patient.full_name;
+    document.getElementById('reg-result').style.display = 'block';
+    btn.style.display = 'none';
+    loadStats();
+  } else alert(d.message || 'Registration failed');
+}
+
+// ── Book Appointment ──────────────────────────────────────────
+async function loadDepartments() {
+  const r = await fetch('/receptionist/api/departments');
+  const d = await r.json();
+  departments = d.departments || [];
+  const sel = document.getElementById('book-dept');
+  sel.innerHTML = '<option value="">All Departments</option>' + departments.map(d=>`<option value="${d.id}">${d.name}</option>`).join('');
+  loadAllDoctors();
+}
+
+async function loadAllDoctors() {
+  const r = await fetch('/receptionist/api/doctors/available');
+  const d = await r.json();
+  allDoctors = d.doctors || [];
+  populateDoctors(allDoctors);
+}
+
+async function loadDeptDoctors() {
+  const deptId = document.getElementById('book-dept').value;
+  const url = deptId ? `/receptionist/api/doctors/available?department_id=${deptId}` : '/receptionist/api/doctors/available';
+  const r = await fetch(url);
+  const d = await r.json();
+  populateDoctors(d.doctors || []);
+}
+
+function populateDoctors(doctors) {
+  const sel = document.getElementById('book-doctor');
+  sel.innerHTML = '<option value="">Select doctor</option>' + doctors.map(d=>`<option value="${d.id}">${d.full_name}${d.specialization?' — '+d.specialization:''} ${d.consultation_fee?'(₹'+d.consultation_fee+')':''}</option>`).join('');
+  // Reset slots when doctor list changes
+  document.getElementById('slot-grid').innerHTML = '';
+  document.getElementById('book-time').value = '';
+  document.getElementById('selected-slot-display') && (document.getElementById('selected-slot-display').style.display = 'none');
+  document.getElementById('doctor-avail-info').style.display = 'none';
+  document.getElementById('slots-info').textContent = 'Select a doctor and date to see available slots';
+}
+
+async function onDoctorChange() {
+  const doctorId = document.getElementById('book-doctor').value;
+  const grid     = document.getElementById('slot-grid');
+  const info     = document.getElementById('slots-info');
+  document.getElementById('book-time').value = '';
+  document.getElementById('selected-slot-display').style.display = 'none';
+  grid.innerHTML = '';
+  if (!doctorId) {
+    document.getElementById('doctor-avail-info').style.display = 'none';
+    info.textContent = 'Select a doctor and date to see available slots';
+    return;
+  }
+  // Load doctor schedule to show available days
+  try {
+    const sr = await fetch(`/receptionist/api/doctors/${doctorId}/schedule`);
+    const sd = await sr.json();
+    if (sd.schedules && sd.schedules.length) {
+      const dayNames = sd.schedules.map(s =>
+        s.day_of_week.charAt(0).toUpperCase() + s.day_of_week.slice(1)
+      ).join(', ');
+      document.getElementById('doctor-days').textContent = dayNames;
+      document.getElementById('doctor-avail-info').style.display = 'block';
+    } else {
+      document.getElementById('doctor-avail-info').style.display = 'none';
+    }
+  } catch(e) {
+    document.getElementById('doctor-avail-info').style.display = 'none';
+  }
+  // Load slots for current date if set
+  const date = document.getElementById('book-date').value;
+  if (date) await loadSlots();
+  else info.textContent = 'Now select a date to see available time slots';
+}
+
+async function loadSlots() {
+  const doctorId = document.getElementById('book-doctor').value;
+  const date     = document.getElementById('book-date').value;
+  const grid     = document.getElementById('slot-grid');
+  const info     = document.getElementById('slots-info');
+  document.getElementById('book-time').value = '';
+  document.getElementById('selected-slot-display').style.display = 'none';
+  grid.innerHTML = '';
+  if (!doctorId) {
+    info.textContent = 'Select a doctor first, then pick a date';
+    info.style.display = 'block';
+    return;
+  }
+  if (!date) {
+    info.textContent = 'Select a date to see available time slots';
+    info.style.display = 'block';
+    return;
+  }
+  info.textContent = 'Loading available slots...';
+  info.style.display = 'block';
+  try {
+    const r = await fetch(`/receptionist/api/doctors/${doctorId}/slots?date=${date}`);
+    const d = await r.json();
+    const dayName = new Date(date + 'T00:00:00').toLocaleDateString('en-US', {weekday:'long'});
+    if (!d.slots || !d.slots.length) {
+      info.innerHTML = `<span style="color:var(--red)">✗ No slots available on ${dayName}, ${date}. Doctor may not work this day.</span>`;
+      return;
+    }
+    const available = d.slots.filter(s => s.available).length;
+    const total     = d.slots.length;
+    info.innerHTML  = `<span style="color:var(--teal)">✓ ${available} of ${total} slots available on ${dayName}</span>`;
+    grid.innerHTML  = d.slots.map(s => `
+      <div class="slot-btn ${s.available ? '' : 'booked'}" onclick="selectSlot('${s.time}', this)">
+        ${s.time}
+        ${!s.available ? '<div style="font-size:9px">Booked</div>' : ''}
+      </div>`).join('');
+  } catch(e) {
+    info.innerHTML = '<span style="color:var(--red)">Failed to load slots. Please try again.</span>';
+  }
+}
+
+function selectSlot(time, el) {
+  if (el.classList.contains('booked')) return;
+  document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('book-time').value = time;
+  const display = document.getElementById('selected-slot-display');
+  document.getElementById('selected-slot-text').textContent = time;
+  display.style.display = 'block';
+}
+
+async function confirmBooking() {
+  const ptId    = document.getElementById('book-pt-id').value;
+  const docId   = document.getElementById('book-doctor').value;
+  const date    = document.getElementById('book-date').value;
+  const time    = document.getElementById('book-time').value;
+  const alertEl = document.getElementById('book-alert');
+  if (!ptId)  { showAlert2(alertEl, 'Select a patient', 'error'); return; }
+  if (!docId) { showAlert2(alertEl, 'Select a doctor', 'error'); return; }
+  if (!date)  { showAlert2(alertEl, 'Select a date', 'error'); return; }
+  if (!time)  { showAlert2(alertEl, 'Select a time slot', 'error'); return; }
+  const r = await fetch('/receptionist/api/appointments/book', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      patient_id: parseInt(ptId), doctor_id: parseInt(docId),
+      appointment_date: date, appointment_time: time,
+      type: document.getElementById('book-type').value,
+      reason: document.getElementById('book-reason').value,
+    })
+  });
+  const d = await r.json();
+  if (d.success) {
+    document.getElementById('booking-result-card').style.display = 'block';
+    document.getElementById('booking-result-body').innerHTML = `
+      <div class="success-box">
+        <div class="title">✓ Appointment Booked!</div>
+        <div class="info-row"><span class="info-label">Token</span><span style="font-weight:700;font-size:18px;color:var(--teal)">#${d.token}</span></div>
+        <div class="info-row"><span class="info-label">Appt No.</span><span style="font-weight:600;font-family:monospace">${d.appointment_no}</span></div>
+        <div class="info-row"><span class="info-label">Date</span><span style="font-weight:500">${date} at ${time}</span></div>
+      </div>`;
+    loadTodayAppts();
+  } else { showAlert2(alertEl, d.message || 'Booking failed', 'error'); }
+}
+
+// ── Beds ──────────────────────────────────────────────────────
+async function loadBeds() {
+  const r = await fetch('/receptionist/api/wards');
+  const d = await r.json();
+  let avail=0, occ=0, clean=0, res=0;
+  const sections = document.getElementById('ward-sections');
+  sections.innerHTML = '';
+  for (const ward of d.wards || []) {
+    avail += ward.available; occ += ward.occupied;
+    const br = await fetch(`/receptionist/api/beds?ward_id=${ward.id}`);
+    const bd = await br.json();
+    const bedHTML = (bd.beds || []).map(b => `
+      <div class="bed-card ${b.status}">
+        <div class="bed-no">${b.bed_number}</div>
+        <div>${b.status}</div>
+      </div>`).join('');
+    sections.innerHTML += `
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-hdr">
+          <div class="card-title">${ward.name}</div>
+          <div style="font-size:12px;color:var(--text-xs)">${ward.floor} · ₹${ward.charge_per_day}/day · ${ward.available} available / ${ward.total} total</div>
+        </div>
+        <div class="card-body"><div class="bed-grid">${bedHTML || '<div class="empty">No beds</div>'}</div></div>
+      </div>`;
+    (bd.beds||[]).forEach(b => { if(b.status==='cleaning') clean++; if(b.status==='reserved') res++; });
+  }
+  document.getElementById('b-avail').textContent = avail;
+  document.getElementById('b-occ').textContent   = occ;
+  document.getElementById('b-clean').textContent = clean;
+  document.getElementById('b-res').textContent   = res;
+}
+
+// ── Admit ─────────────────────────────────────────────────────
+async function loadAdmitData() {
+  const [dr, wr] = await Promise.all([
+    fetch('/receptionist/api/doctors/available'),
+    fetch('/receptionist/api/wards')
+  ]);
+  const [dd, wd] = await Promise.all([dr.json(), wr.json()]);
+  const docSel  = document.getElementById('admit-doctor');
+  const wardSel = document.getElementById('admit-ward');
+  docSel.innerHTML  = '<option value="">Select doctor</option>' + (dd.doctors||[]).map(d=>`<option value="${d.id}">${d.full_name}</option>`).join('');
+  wardSel.innerHTML = '<option value="">Select ward</option>' + (wd.wards||[]).map(w=>`<option value="${w.id}">${w.name} (${w.available} available)</option>`).join('');
+}
+
+async function loadWardBeds() {
+  const wardId = document.getElementById('admit-ward').value;
+  const bedSel = document.getElementById('admit-bed');
+  if (!wardId) { bedSel.innerHTML = '<option value="">Select bed</option>'; return; }
+  const r = await fetch(`/receptionist/api/beds?ward_id=${wardId}`);
+  const d = await r.json();
+  const available = (d.beds||[]).filter(b => b.status === 'available');
+  bedSel.innerHTML = '<option value="">Select bed</option>' + available.map(b=>`<option value="${b.id}">${b.bed_number}</option>`).join('');
+}
+
+async function submitAdmission() {
+  const ptId   = document.getElementById('admit-pt-id').value;
+  const docId  = document.getElementById('admit-doctor').value;
+  const bedId  = document.getElementById('admit-bed').value;
+  const wardId = document.getElementById('admit-ward').value;
+  const alertEl= document.getElementById('admit-alert');
+  if (!ptId||!docId||!bedId||!wardId) { showAlert2(alertEl,'All fields required','error'); return; }
+  const r = await fetch('/receptionist/api/admit', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({patient_id:parseInt(ptId), doctor_id:parseInt(docId),
+      bed_id:parseInt(bedId), ward_id:parseInt(wardId),
+      reason: document.getElementById('admit-reason').value})
+  });
+  const d = await r.json();
+  if (d.success) {
+    showAlert2(alertEl, `✓ ${d.message} — ${d.admission_no}`, 'success');
+    loadStats(); loadAdmitData();
+  } else showAlert2(alertEl, d.message || 'Failed', 'error');
+}
+
+// ── Billing ───────────────────────────────────────────────────
+function addBillItem() {
+  const desc = document.getElementById('bi-desc').value.trim();
+  const amt  = parseFloat(document.getElementById('bi-amt').value);
+  const type = document.getElementById('bi-type').value;
+  if (!desc || !amt) { alert('Enter description and amount'); return; }
+  billItems.push({ description: desc, amount: amt, type, quantity: 1 });
+  renderBillItems();
+  document.getElementById('bi-desc').value = '';
+  document.getElementById('bi-amt').value  = '';
+}
+
+function removeBillItem(i) { billItems.splice(i,1); renderBillItems(); }
+
+function renderBillItems() {
+  const el = document.getElementById('bill-items');
+  if (!billItems.length) { el.innerHTML = ''; return; }
+  const subtotal = billItems.reduce((s,i)=>s+i.amount,0);
+  const gst      = Math.round(subtotal * 0.18 * 100) / 100;
+  el.innerHTML = billItems.map((item,i)=>`
+    <div class="bill-row">
+      <span>${item.description} <span class="badge badge-gray" style="margin-left:4px">${item.type}</span></span>
+      <span style="display:flex;align-items:center;gap:8px">₹${item.amount.toFixed(2)} <button onclick="removeBillItem(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:12px">✕</button></span>
+    </div>`).join('') + `
+    <div class="bill-row" style="color:var(--text-xs)"><span>GST (18%)</span><span>₹${gst.toFixed(2)}</span></div>
+    <div class="bill-total"><span>Total</span><span style="color:var(--teal)">₹${(subtotal+gst).toFixed(2)}</span></div>`;
+}
+
+async function generateBill() {
+  const ptId = document.getElementById('bill-pt-id').value;
+  if (!ptId)          { showAlert2(document.getElementById('bill-alert'),'Select a patient','error'); return; }
+  if (!billItems.length) { alert('Add at least one item'); return; }
+  const r = await fetch('/receptionist/api/billing/create', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ patient_id: parseInt(ptId), items: billItems })
+  });
+  const d = await r.json();
+  if (d.success) {
+    document.getElementById('invoice-result').style.display = 'block';
+    document.getElementById('invoice-body').innerHTML = `
+      <div class="success-box">
+        <div class="title">✓ Invoice Created!</div>
+        <div class="info-row"><span class="info-label">Invoice No.</span><span style="font-weight:600;font-family:monospace">${d.invoice_no}</span></div>
+        <div class="info-row"><span class="info-label">Total Amount</span><span style="font-weight:700;font-size:16px;color:var(--teal)">₹${d.total.toFixed(2)}</span></div>
+      </div>`;
+    billItems = []; renderBillItems();
+  } else { showAlert2(document.getElementById('bill-alert'), d.message||'Failed','error'); }
+}
+
+// ── Helpers ───────────────────────────────────────────────────
+function showAlert(msg, type='success') {
+  const a = document.createElement('div');
+  a.style.cssText = 'position:fixed;top:70px;right:20px;padding:10px 16px;border-radius:8px;font-size:13px;z-index:300;animation:fadeIn .2s ease';
+  a.style.background = type==='success' ? 'var(--teal)' : 'var(--red)';
+  a.style.color = '#fff';
+  a.textContent = msg;
+  document.body.appendChild(a);
+  setTimeout(() => a.remove(), 3000);
+}
+function showAlert2(el, msg, type) {
+  el.textContent = msg;
+  el.className   = `alert show alert-${type}`;
+  setTimeout(() => el.classList.remove('show'), 4000);
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function toggleTheme() {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', dark?'':'dark');
+  localStorage.setItem('theme', dark?'light':'dark');
+}
+</script>
+</body>
+</html>

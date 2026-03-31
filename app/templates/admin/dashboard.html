@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Admin Dashboard — MediCore HMS</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue:#1a6fc4;--blue-light:#e8f1fb;--blue-dark:#155fa0;
+  --teal:#0f9e75;--teal-light:#e1f5ee;
+  --amber:#b45309;--amber-light:#fef3c7;
+  --red:#dc2626;--red-light:#fef2f2;
+  --green:#15803d;--green-light:#f0fdf4;
+  --purple:#7c3aed;--purple-light:#f5f3ff;
+  --gray:#6b7280;--border:#e5e7eb;
+  --sidebar-w:240px;
+  --bg:#f1f5f9;--white:#fff;
+  --text:#1e293b;--text-sm:#64748b;--text-xs:#94a3b8;
+  --radius:10px;--shadow:0 1px 3px rgba(0,0,0,.08);
+}
+[data-theme=dark]{
+  --bg:#0f172a;--white:#1e293b;--text:#f1f5f9;--text-sm:#94a3b8;
+  --text-xs:#64748b;--border:#334155;--blue-light:#1e3a5f;
+  --teal-light:#0d3324;--amber-light:#451a03;--red-light:#450a0a;
+  --green-light:#052e16;--purple-light:#2e1065;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+     background:var(--bg);color:var(--text);display:flex;min-height:100vh}
+
+/* ── SIDEBAR ── */
+#sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--white);
+         border-right:1px solid var(--border);display:flex;flex-direction:column;
+         position:fixed;top:0;left:0;height:100vh;z-index:100;overflow-y:auto;
+         transition:transform .25s}
+.sidebar-brand{padding:18px 16px 14px;border-bottom:1px solid var(--border);
+               display:flex;align-items:center;gap:10px}
+.brand-icon{width:34px;height:34px;background:var(--blue);border-radius:8px;
+            display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.brand-icon svg{width:18px;height:18px;fill:white}
+.brand-name{font-size:15px;font-weight:700;letter-spacing:-.3px}
+.brand-sub{font-size:10px;color:var(--text-xs);margin-top:1px}
+
+.nav-section{font-size:10px;font-weight:600;color:var(--text-xs);
+             text-transform:uppercase;letter-spacing:.08em;padding:14px 16px 4px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 14px;margin:1px 8px;
+          border-radius:7px;cursor:pointer;font-size:13px;color:var(--text-sm);
+          transition:all .15s;position:relative;text-decoration:none}
+.nav-item:hover{background:var(--bg);color:var(--text)}
+.nav-item.active{background:var(--blue-light);color:var(--blue);font-weight:500}
+.nav-item svg{width:16px;height:16px;flex-shrink:0;opacity:.7}
+.nav-item.active svg{opacity:1}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;
+           font-size:10px;border-radius:10px;padding:1px 6px;font-weight:600}
+.sidebar-footer{margin-top:auto;padding:12px;border-top:1px solid var(--border)}
+.user-card{display:flex;align-items:center;gap:9px;padding:8px;
+           border-radius:8px;cursor:pointer}
+.user-card:hover{background:var(--bg)}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--blue);
+        display:flex;align-items:center;justify-content:center;
+        font-size:12px;font-weight:600;color:#fff;flex-shrink:0}
+.user-name{font-size:12px;font-weight:500}
+.user-role{font-size:10px;color:var(--text-xs);text-transform:capitalize}
+
+/* ── MAIN ── */
+#main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+
+/* ── TOPBAR ── */
+#topbar{background:var(--white);border-bottom:1px solid var(--border);
+        height:56px;display:flex;align-items:center;padding:0 24px;gap:12px;
+        position:sticky;top:0;z-index:50}
+.topbar-title{font-size:16px;font-weight:600;flex:1}
+.topbar-btn{width:34px;height:34px;border-radius:8px;border:none;
+            background:none;cursor:pointer;display:flex;align-items:center;
+            justify-content:center;color:var(--text-sm);transition:background .15s;
+            position:relative}
+.topbar-btn:hover{background:var(--bg)}
+.topbar-btn svg{width:18px;height:18px}
+.notif-badge{position:absolute;top:4px;right:4px;width:8px;height:8px;
+             background:var(--red);border-radius:50%;border:2px solid var(--white)}
+.live-badge{display:flex;align-items:center;gap:5px;font-size:11px;
+            color:var(--teal);background:var(--teal-light);
+            padding:4px 10px;border-radius:20px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);
+          animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── CONTENT ── */
+#content{padding:24px;flex:1}
+.page{display:none}
+.page.active{display:block;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ── KPI GRID ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.kpi-card{background:var(--white);border-radius:var(--radius);padding:16px 18px;
+          border:1px solid var(--border);cursor:pointer;
+          transition:transform .15s,box-shadow .15s}
+.kpi-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.08)}
+.kpi-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+.kpi-icon{width:38px;height:38px;border-radius:9px;display:flex;
+          align-items:center;justify-content:center}
+.kpi-icon svg{width:20px;height:20px}
+.kpi-label{font-size:11px;font-weight:600;color:var(--text-xs);
+           text-transform:uppercase;letter-spacing:.06em}
+.kpi-value{font-size:26px;font-weight:700;line-height:1;margin-bottom:4px}
+.kpi-sub{font-size:11px;color:var(--text-xs)}
+.kpi-trend{font-size:11px;font-weight:500}
+.trend-up{color:var(--teal)}
+.trend-down{color:var(--red)}
+
+/* ── CHARTS ── */
+.charts-row{display:grid;grid-template-columns:1.5fr 1fr;gap:14px;margin-bottom:22px}
+.chart-card{background:var(--white);border-radius:var(--radius);padding:18px;
+            border:1px solid var(--border)}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-title{font-size:13px;font-weight:600}
+.card-sub{font-size:11px;color:var(--text-xs)}
+.chart-wrap{position:relative;height:200px}
+
+/* ── ALERTS ── */
+.alert-feed{background:var(--white);border-radius:var(--radius);padding:18px;
+            border:1px solid var(--border);margin-bottom:22px}
+.alert-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;
+            border-radius:8px;margin-bottom:8px;cursor:pointer;border-left:3px solid}
+.alert-item:last-child{margin-bottom:0}
+.alert-item.danger{background:var(--red-light);border-color:var(--red)}
+.alert-item.warning{background:var(--amber-light);border-color:var(--amber)}
+.alert-item.info{background:var(--blue-light);border-color:var(--blue)}
+.alert-item.success{background:var(--green-light);border-color:var(--green)}
+.alert-title{font-size:12px;font-weight:600}
+.alert-desc{font-size:11px;color:var(--text-sm);margin-top:2px}
+.alert-time{font-size:10px;color:var(--text-xs);margin-left:auto;flex-shrink:0;white-space:nowrap}
+
+/* ── TABLE ── */
+.table-card{background:var(--white);border-radius:var(--radius);
+            border:1px solid var(--border);overflow:hidden;margin-bottom:22px}
+.table-header{padding:14px 18px;border-bottom:1px solid var(--border);
+              display:flex;align-items:center;gap:10px}
+table{width:100%;border-collapse:collapse}
+th{padding:10px 16px;text-align:left;font-size:11px;font-weight:600;
+   color:var(--text-xs);text-transform:uppercase;letter-spacing:.05em;
+   background:var(--bg);border-bottom:1px solid var(--border)}
+td{padding:11px 16px;font-size:13px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg)}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;
+       border-radius:20px;font-size:11px;font-weight:500}
+.badge-blue{background:var(--blue-light);color:var(--blue)}
+.badge-teal{background:var(--teal-light);color:var(--teal)}
+.badge-amber{background:var(--amber-light);color:var(--amber)}
+.badge-red{background:var(--red-light);color:var(--red)}
+.badge-green{background:var(--green-light);color:var(--green)}
+.badge-purple{background:var(--purple-light);color:var(--purple)}
+.badge-gray{background:var(--bg);color:var(--gray)}
+
+/* ── BUTTONS ── */
+.btn{padding:8px 16px;border-radius:7px;font-size:13px;font-weight:500;
+     cursor:pointer;border:none;transition:all .15s;display:inline-flex;
+     align-items:center;gap:6px}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:var(--blue-dark)}
+.btn-outline{background:none;border:1px solid var(--border);color:var(--text)}
+.btn-outline:hover{background:var(--bg)}
+.btn-danger{background:var(--red);color:#fff}
+.btn-sm{padding:5px 11px;font-size:12px}
+.btn svg{width:14px;height:14px}
+
+/* ── SEARCH/FILTER BAR ── */
+.filter-bar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.search-wrap{position:relative;flex:1;min-width:200px}
+.search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);
+                 width:15px;height:15px;color:var(--text-xs)}
+.search-wrap input{width:100%;padding:8px 12px 8px 32px;border:1px solid var(--border);
+                   border-radius:7px;font-size:13px;background:var(--white);color:var(--text);outline:none}
+.search-wrap input:focus{border-color:var(--blue)}
+select{padding:8px 12px;border:1px solid var(--border);border-radius:7px;
+       font-size:13px;background:var(--white);color:var(--text);outline:none;cursor:pointer}
+
+/* ── MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;
+          display:none;align-items:center;justify-content:center;padding:20px}
+.modal-bg.open{display:flex}
+.modal{background:var(--white);border-radius:14px;width:100%;max-width:520px;
+       max-height:90vh;overflow-y:auto;animation:modalIn .2s ease}
+@keyframes modalIn{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-header{padding:18px 20px;border-bottom:1px solid var(--border);
+              display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:15px;font-weight:600}
+.modal-close{background:none;border:none;cursor:pointer;color:var(--text-sm);
+             width:28px;height:28px;border-radius:6px;display:flex;
+             align-items:center;justify-content:center}
+.modal-close:hover{background:var(--bg)}
+.modal-body{padding:20px}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--border);
+              display:flex;justify-content:flex-end;gap:8px}
+
+/* ── FORM ── */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:12px;font-weight:500;
+                  color:var(--text-sm);margin-bottom:5px}
+.form-group input,.form-group select,.form-group textarea{
+  width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:7px;
+  font-size:13px;color:var(--text);background:var(--white);outline:none;
+  transition:border-color .15s}
+.form-group input:focus,.form-group select:focus{border-color:var(--blue)}
+.form-group textarea{resize:vertical;min-height:80px}
+.cred-box{background:var(--bg);border-radius:8px;padding:14px;
+          border:1px solid var(--border);margin-top:10px}
+.cred-row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+.cred-row:last-child{margin-bottom:0}
+.cred-label{color:var(--text-sm)}
+.cred-val{font-weight:600;font-family:monospace}
+
+/* ── SCHEDULE ── */
+.day-schedule{border:1px solid var(--border);border-radius:8px;
+              padding:12px;margin-bottom:10px}
+.day-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.day-label{font-size:13px;font-weight:500;width:100px}
+
+/* ── SETTINGS ── */
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.setting-section{background:var(--white);border-radius:var(--radius);
+                 padding:18px;border:1px solid var(--border)}
+.setting-section h3{font-size:13px;font-weight:600;margin-bottom:14px;
+                    padding-bottom:10px;border-bottom:1px solid var(--border)}
+
+/* ── NOTIFICATIONS PANEL ── */
+.notif-panel{position:fixed;top:56px;right:0;width:340px;background:var(--white);
+             border-left:1px solid var(--border);height:calc(100vh - 56px);
+             z-index:99;transform:translateX(100%);transition:transform .25s;
+             overflow-y:auto;padding:16px}
+.notif-panel.open{transform:translateX(0)}
+.notif-item{padding:10px 12px;border-radius:8px;margin-bottom:8px;
+            cursor:pointer;transition:background .15s}
+.notif-item:hover{background:var(--bg)}
+.notif-item.unread{background:var(--blue-light)}
+.notif-title{font-size:12px;font-weight:600}
+.notif-msg{font-size:11px;color:var(--text-sm);margin-top:2px}
+.notif-time{font-size:10px;color:var(--text-xs);margin-top:4px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .charts-row{grid-template-columns:1fr}
+  .form-row{grid-template-columns:1fr}
+  .settings-grid{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  #sidebar{transform:translateX(-100%)}
+  #sidebar.open{transform:translateX(0)}
+  #main{margin-left:0}
+}
+
+/* ── MISC ── */
+.empty{text-align:center;padding:40px;color:var(--text-xs);font-size:13px}
+.loading{text-align:center;padding:20px;color:var(--text-xs)}
+.divider{height:1px;background:var(--border);margin:16px 0}
+.text-right{text-align:right}
+.flex{display:flex;align-items:center}
+.gap-2{gap:8px}
+.ml-auto{margin-left:auto}
+.mt-2{margin-top:8px}
+.fw-500{font-weight:500}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2zm1 14h-2v-4H8l4-7 4 7h-3v4z"/></svg>
+    </div>
+    <div>
+      <div class="brand-name">MediCore HMS</div>
+      <div class="brand-sub">Admin Panel</div>
+    </div>
+  </div>
+
+  <div class="nav-section">Main</div>
+  <a class="nav-item active" onclick="showPage('overview')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    Overview
+  </a>
+  <a class="nav-item" onclick="showPage('users')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+    User Management
+  </a>
+  <a class="nav-item" onclick="showPage('doctors')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+    Doctors
+  </a>
+
+  <div class="nav-section">Hospital</div>
+  <a class="nav-item" onclick="showPage('departments')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M9 21V5l7-2v18"/></svg>
+    Departments
+  </a>
+  <a class="nav-item" onclick="showPage('beds')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20v-8a2 2 0 012-2h16a2 2 0 012 2v8M2 10V6a2 2 0 012-2h4"/></svg>
+    Bed Management
+  </a>
+
+  <div class="nav-section">Reports</div>
+  <a class="nav-item" onclick="showPage('audit')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+    Audit Logs
+  </a>
+
+  <div class="nav-section">System</div>
+  <a class="nav-item" onclick="showPage('settings')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    Settings
+  </a>
+
+  <div class="sidebar-footer">
+    <div class="user-card" onclick="window.location='/auth/logout'">
+      <div class="avatar" id="user-avatar">AD</div>
+      <div>
+        <div class="user-name" id="user-name">Admin</div>
+        <div class="user-role">Administrator</div>
+      </div>
+      <svg style="margin-left:auto;width:14px;height:14px;color:var(--text-xs)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <!-- TOPBAR -->
+  <div id="topbar">
+    <div class="topbar-title" id="page-title">Overview</div>
+    <div class="live-badge"><span class="live-dot"></span>Live</div>
+    <button class="topbar-btn" onclick="toggleTheme()" title="Toggle theme">
+      <svg id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
+    </button>
+    <button class="topbar-btn" onclick="toggleNotifPanel()" title="Notifications">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+      <span class="notif-badge" id="notif-badge" style="display:none"></span>
+    </button>
+    <a href="/auth/logout" class="topbar-btn" title="Logout">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+    </a>
+  </div>
+
+  <!-- CONTENT -->
+  <div id="content">
+
+    <!-- ── OVERVIEW PAGE ── -->
+    <div class="page active" id="page-overview">
+      <div class="kpi-grid" id="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <div class="kpi-icon" style="background:var(--blue-light)">
+              <svg style="color:var(--blue)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            </div>
+            <div class="kpi-label">Patients Today</div>
+          </div>
+          <div class="kpi-value" id="k-patients">—</div>
+          <div class="kpi-sub">Total: <span id="k-total-patients">—</span></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <div class="kpi-icon" style="background:var(--teal-light)">
+              <svg style="color:var(--teal)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            </div>
+            <div class="kpi-label">Revenue Today</div>
+          </div>
+          <div class="kpi-value" id="k-revenue">—</div>
+          <div class="kpi-sub">Appointments: <span id="k-appts">—</span></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <div class="kpi-icon" style="background:var(--amber-light)">
+              <svg style="color:var(--amber)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <div class="kpi-label">Active Doctors</div>
+          </div>
+          <div class="kpi-value" id="k-doctors">—</div>
+          <div class="kpi-sub">Total: <span id="k-total-doctors">—</span></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <div class="kpi-icon" style="background:var(--red-light)">
+              <svg style="color:var(--red)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20v-8a2 2 0 012-2h16a2 2 0 012 2v8"/><path d="M2 10V6a2 2 0 012-2h4"/></svg>
+            </div>
+            <div class="kpi-label">Beds Occupied</div>
+          </div>
+          <div class="kpi-value" id="k-beds">—</div>
+          <div class="kpi-sub">Available: <span id="k-beds-avail">—</span></div>
+        </div>
+      </div>
+
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="card-header">
+            <div><div class="card-title">Daily Appointments</div><div class="card-sub">Last 7 days</div></div>
+          </div>
+          <div class="chart-wrap"><canvas id="chart-appts"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="card-header">
+            <div><div class="card-title">By Department</div><div class="card-sub">Appointment distribution</div></div>
+          </div>
+          <div class="chart-wrap"><canvas id="chart-depts"></canvas></div>
+        </div>
+      </div>
+
+      <div class="alert-feed">
+        <div class="card-header">
+          <div class="card-title">Live Alerts</div>
+          <button class="btn btn-outline btn-sm" onclick="loadStats()">Refresh</button>
+        </div>
+        <div id="alerts-container">
+          <div class="alert-item info">
+            <div><div class="alert-title">System Ready</div>
+            <div class="alert-desc">MediCore HMS is running. Configure notifications to see live alerts.</div></div>
+            <div class="alert-time">Now</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── USERS PAGE ── -->
+    <div class="page" id="page-users">
+      <div class="filter-bar">
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" id="user-search" placeholder="Search users..." oninput="debounce(loadUsers,400)()"/>
+        </div>
+        <select id="role-filter" onchange="loadUsers()">
+          <option value="">All Roles</option>
+          <option value="doctor">Doctor</option>
+          <option value="receptionist">Receptionist</option>
+          <option value="pharmacist">Pharmacist</option>
+          <option value="lab_tech">Lab Tech</option>
+          <option value="patient">Patient</option>
+        </select>
+        <button class="btn btn-primary" onclick="openCreateUser()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add User
+        </button>
+      </div>
+      <div class="table-card">
+        <table>
+          <thead><tr><th>Name</th><th>Username</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="users-tbody"><tr><td colspan="6" class="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+      <div id="user-pagination" class="flex gap-2" style="justify-content:flex-end"></div>
+    </div>
+
+    <!-- ── DOCTORS PAGE ── -->
+    <div class="page" id="page-doctors">
+      <div class="filter-bar">
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" id="doc-search" placeholder="Search doctors..." oninput="debounce(loadDoctors,400)()"/>
+        </div>
+        <select id="dept-filter" onchange="loadDoctors()">
+          <option value="">All Departments</option>
+        </select>
+        <button class="btn btn-primary" onclick="openCreateUser('doctor')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Doctor
+        </button>
+      </div>
+      <div class="table-card">
+        <table>
+          <thead><tr><th>Doctor</th><th>Specialization</th><th>Department</th><th>Fee</th><th>Available</th><th>Actions</th></tr></thead>
+          <tbody id="doctors-tbody"><tr><td colspan="6" class="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── DEPARTMENTS PAGE ── -->
+    <div class="page" id="page-departments">
+      <div class="table-card">
+        <div class="table-header"><div class="card-title">All Departments</div></div>
+        <table>
+          <thead><tr><th>Name</th><th>Floor</th><th>Status</th></tr></thead>
+          <tbody id="depts-tbody"><tr><td colspan="3" class="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── BEDS PAGE ── -->
+    <div class="page" id="page-beds">
+      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+        <div class="kpi-card"><div class="kpi-top"><div class="kpi-icon" style="background:var(--teal-light)"><svg style="color:var(--teal)" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg></div><div class="kpi-label">Available</div></div><div class="kpi-value" id="bed-avail">—</div></div>
+        <div class="kpi-card"><div class="kpi-top"><div class="kpi-icon" style="background:var(--red-light)"><svg style="color:var(--red)" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg></div><div class="kpi-label">Occupied</div></div><div class="kpi-value" id="bed-occ">—</div></div>
+        <div class="kpi-card"><div class="kpi-top"><div class="kpi-icon" style="background:var(--amber-light)"><svg style="color:var(--amber)" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg></div><div class="kpi-label">Cleaning</div></div><div class="kpi-value" id="bed-clean">—</div></div>
+        <div class="kpi-card"><div class="kpi-top"><div class="kpi-icon" style="background:var(--blue-light)"><svg style="color:var(--blue)" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg></div><div class="kpi-label">Reserved</div></div><div class="kpi-value" id="bed-res">—</div></div>
+      </div>
+      <div class="table-card">
+        <div class="table-header"><div class="card-title">Bed Map</div></div>
+        <table>
+          <thead><tr><th>Bed No.</th><th>Ward</th><th>Type</th><th>Status</th></tr></thead>
+          <tbody id="beds-tbody"><tr><td colspan="4" class="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── AUDIT PAGE ── -->
+    <div class="page" id="page-audit">
+      <div class="table-card">
+        <div class="table-header">
+          <div class="card-title">Audit Trail</div>
+          <button class="btn btn-outline btn-sm ml-auto" onclick="loadAudit()">Refresh</button>
+        </div>
+        <table>
+          <thead><tr><th>Time</th><th>User</th><th>Action</th><th>Module</th><th>Description</th><th>IP</th></tr></thead>
+          <tbody id="audit-tbody"><tr><td colspan="6" class="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── SETTINGS PAGE ── -->
+    <div class="page" id="page-settings">
+      <div class="settings-grid">
+        <div class="setting-section">
+          <h3>Hospital Information</h3>
+          <div class="form-group"><label>Hospital Name</label><input type="text" id="s-name"/></div>
+          <div class="form-group"><label>Address</label><input type="text" id="s-address"/></div>
+          <div class="form-group"><label>Phone</label><input type="text" id="s-phone"/></div>
+          <div class="form-group"><label>Email</label><input type="text" id="s-email"/></div>
+          <div class="form-group"><label>GST Number</label><input type="text" id="s-gst"/></div>
+          <button class="btn btn-primary" onclick="saveSettings()">Save Changes</button>
+        </div>
+        <div class="setting-section">
+          <h3>System Configuration</h3>
+          <div class="form-group"><label>UHID Prefix (e.g. MED)</label><input type="text" id="s-uhid"/></div>
+          <div class="form-group"><label>Appointment Slot (minutes)</label><input type="number" id="s-slot"/></div>
+          <div class="form-group"><label>GST Rate (%)</label><input type="number" id="s-gstrate"/></div>
+          <div class="form-group"><label>Currency Symbol</label><input type="text" id="s-currency"/></div>
+          <button class="btn btn-primary" onclick="saveSettings()">Save Changes</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- NOTIFICATIONS PANEL -->
+<div class="notif-panel" id="notif-panel">
+  <div class="flex gap-2" style="margin-bottom:12px">
+    <div style="font-size:14px;font-weight:600">Notifications</div>
+    <button class="btn btn-outline btn-sm ml-auto" onclick="markAllRead()">Mark all read</button>
+  </div>
+  <div id="notif-list"><div class="empty">No new notifications</div></div>
+</div>
+
+<!-- CREATE USER MODAL -->
+<div class="modal-bg" id="modal-user">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-user-title">Add New User</div>
+      <button class="modal-close" onclick="closeModal('modal-user')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>First Name *</label><input type="text" id="f-fname"/></div>
+        <div class="form-group"><label>Last Name *</label><input type="text" id="f-lname"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Email *</label><input type="email" id="f-email"/></div>
+        <div class="form-group"><label>Phone *</label><input type="text" id="f-phone"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Role *</label>
+          <select id="f-role" onchange="toggleDoctorFields()">
+            <option value="">Select role</option>
+            <option value="doctor">Doctor</option>
+            <option value="receptionist">Receptionist</option>
+            <option value="pharmacist">Pharmacist</option>
+            <option value="lab_tech">Lab Technician</option>
+            <option value="patient">Patient</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Gender</label>
+          <select id="f-gender">
+            <option value="">Select</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+      <!-- Doctor-specific fields -->
+      <div id="doctor-fields" style="display:none">
+        <div class="divider"></div>
+        <div style="font-size:12px;font-weight:600;color:var(--text-xs);margin-bottom:10px;text-transform:uppercase">Doctor Details</div>
+        <div class="form-row">
+          <div class="form-group"><label>Department</label>
+            <select id="f-dept"><option value="">Select dept</option></select>
+          </div>
+          <div class="form-group"><label>Specialization</label><input type="text" id="f-spec"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Qualification</label><input type="text" id="f-qual"/></div>
+          <div class="form-group"><label>Experience (years)</label><input type="number" id="f-exp" value="0"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Registration No.</label><input type="text" id="f-regno"/></div>
+          <div class="form-group"><label>Consultation Fee (₹)</label><input type="number" id="f-fee" value="0"/></div>
+        </div>
+      </div>
+      <!-- Credentials display -->
+      <div id="cred-display" style="display:none">
+        <div class="divider"></div>
+        <div style="font-size:12px;font-weight:600;color:var(--teal);margin-bottom:8px">✓ User Created! Save these credentials:</div>
+        <div class="cred-box">
+          <div class="cred-row"><span class="cred-label">Username</span><span class="cred-val" id="cred-username"></span></div>
+          <div class="cred-row"><span class="cred-label">Password</span><span class="cred-val" id="cred-password"></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-user')">Cancel</button>
+      <button class="btn btn-primary" id="create-user-btn" onclick="createUser()">Create User</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCHEDULE MODAL -->
+<div class="modal-bg" id="modal-schedule">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header">
+      <div class="modal-title">Doctor Schedule</div>
+      <button class="modal-close" onclick="closeModal('modal-schedule')">✕</button>
+    </div>
+    <div class="modal-body" id="schedule-body">Loading...</div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-schedule')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSchedule()">Save Schedule</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────
+let currentPage = 'overview';
+let userPage    = 1;
+let auditPage   = 1;
+let chartAppts  = null;
+let chartDepts  = null;
+let currentDoctorId = null;
+let departments = [];
+
+// ── Init ──────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  loadStats();
+  loadCharts();
+  loadNotifications();
+  loadDepartments();
+  setInterval(loadStats, 30000);
+  setInterval(loadNotifications, 60000);
+  const saved = localStorage.getItem('theme');
+  if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+});
+
+// ── Page Navigation ───────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes(name))
+      n.classList.add('active');
+  });
+  const titles = {
+    overview:'Overview', users:'User Management', doctors:'Doctors',
+    departments:'Departments', beds:'Bed Management',
+    audit:'Audit Logs', settings:'Settings'
+  };
+  document.getElementById('page-title').textContent = titles[name] || name;
+  currentPage = name;
+  if (name === 'users')       { userPage = 1; loadUsers(); }
+  if (name === 'doctors')     loadDoctors();
+  if (name === 'departments') loadDepts();
+  if (name === 'beds')        loadBeds();
+  if (name === 'audit')       loadAudit();
+  if (name === 'settings')    loadSettings();
+}
+
+// ── Stats ─────────────────────────────────────────────────────
+async function loadStats() {
+  try {
+    const r = await fetch('/admin/api/stats');
+    const d = await r.json();
+    if (!d.success) return;
+    const s = d.stats;
+    document.getElementById('k-patients').textContent       = s.patients_today;
+    document.getElementById('k-total-patients').textContent = s.total_patients;
+    document.getElementById('k-revenue').textContent        = '₹' + s.revenue_today.toLocaleString('en-IN');
+    document.getElementById('k-appts').textContent          = s.appointments_today + ' today';
+    document.getElementById('k-doctors').textContent        = s.active_doctors;
+    document.getElementById('k-total-doctors').textContent  = s.total_doctors;
+    document.getElementById('k-beds').textContent           = s.beds_occupied + '/' + s.beds_total;
+    document.getElementById('k-beds-avail').textContent     = s.beds_available;
+  } catch(e) { console.error('Stats error:', e); }
+}
+
+// ── Charts ────────────────────────────────────────────────────
+async function loadCharts() {
+  try {
+    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const tc   = dark ? '#94a3b8' : '#64748b';
+    const gc   = dark ? '#334155' : '#e2e8f0';
+
+    // Appointments bar chart
+    const ra = await fetch('/admin/api/charts/appointments');
+    const da = await ra.json();
+    if (chartAppts) chartAppts.destroy();
+    chartAppts = new Chart(document.getElementById('chart-appts'), {
+      type: 'bar',
+      data: {
+        labels:   da.labels,
+        datasets: [{
+          label: 'Appointments',
+          data:  da.data,
+          backgroundColor: '#1a6fc4cc',
+          borderRadius: 6,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { color: gc }, ticks: { color: tc } },
+          y: { grid: { color: gc }, ticks: { color: tc } }
+        }
+      }
+    });
+
+    // Department doughnut chart
+    const rd = await fetch('/admin/api/charts/departments');
+    const dd = await rd.json();
+    if (chartDepts) chartDepts.destroy();
+    const colors = ['#1a6fc4','#0f9e75','#b45309','#dc2626','#7c3aed','#0891b2','#d97706','#16a34a'];
+    chartDepts = new Chart(document.getElementById('chart-depts'), {
+      type: 'doughnut',
+      data: {
+        labels: dd.labels,
+        datasets: [{ data: dd.data, backgroundColor: colors, borderWidth: 2, borderColor: dark ? '#1e293b' : '#fff' }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'right', labels: { color: tc, font: { size: 11 } } } },
+        cutout: '60%'
+      }
+    });
+  } catch(e) { console.error('Chart error:', e); }
+}
+
+// ── Notifications ─────────────────────────────────────────────
+async function loadNotifications() {
+  try {
+    const r = await fetch('/admin/api/notifications');
+    const d = await r.json();
+    const badge = document.getElementById('notif-badge');
+    const list  = document.getElementById('notif-list');
+    if (d.unread_count > 0) {
+      badge.style.display = 'block';
+      badge.textContent   = d.unread_count > 9 ? '9+' : d.unread_count;
+    } else {
+      badge.style.display = 'none';
+    }
+    if (d.notifications.length === 0) {
+      list.innerHTML = '<div class="empty">No new notifications</div>';
+    } else {
+      list.innerHTML = d.notifications.map(n => `
+        <div class="notif-item ${n.is_read ? '' : 'unread'}">
+          <div class="notif-title">${n.title}</div>
+          <div class="notif-msg">${n.message || ''}</div>
+          <div class="notif-time">${timeAgo(n.created_at)}</div>
+        </div>`).join('');
+    }
+  } catch(e) {}
+}
+
+function toggleNotifPanel() {
+  document.getElementById('notif-panel').classList.toggle('open');
+}
+
+async function markAllRead() {
+  await fetch('/admin/api/notifications/mark-read', { method: 'POST' });
+  loadNotifications();
+}
+
+// ── Users ─────────────────────────────────────────────────────
+async function loadUsers() {
+  const search = document.getElementById('user-search').value;
+  const role   = document.getElementById('role-filter').value;
+  const tbody  = document.getElementById('users-tbody');
+  tbody.innerHTML = '<tr><td colspan="6" class="loading">Loading...</td></tr>';
+  const r = await fetch(`/admin/api/users?search=${encodeURIComponent(search)}&role=${role}&page=${userPage}`);
+  const d = await r.json();
+  if (!d.users.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">No users found</td></tr>';
+    return;
+  }
+  const roleColors = { admin:'purple', doctor:'blue', receptionist:'teal',
+                       pharmacist:'amber', lab_tech:'red', patient:'green' };
+  tbody.innerHTML = d.users.map(u => `
+    <tr>
+      <td><div class="fw-500">${u.full_name}</div></td>
+      <td>${u.username}</td>
+      <td>${u.email}</td>
+      <td><span class="badge badge-${roleColors[u.role]||'gray'}">${u.role}</span></td>
+      <td><span class="badge ${u.is_active ? 'badge-teal' : 'badge-red'}">${u.is_active ? 'Active' : 'Inactive'}</span></td>
+      <td>
+        <button class="btn btn-outline btn-sm" onclick="toggleUser(${u.id})">Toggle</button>
+        <button class="btn btn-outline btn-sm" onclick="resetPwd(${u.id})">Reset Pwd</button>
+      </td>
+    </tr>`).join('');
+  // Pagination
+  const pag = document.getElementById('user-pagination');
+  pag.innerHTML = '';
+  for (let i = 1; i <= d.pages; i++) {
+    const b = document.createElement('button');
+    b.className = `btn btn-sm ${i === userPage ? 'btn-primary' : 'btn-outline'}`;
+    b.textContent = i;
+    b.onclick = () => { userPage = i; loadUsers(); };
+    pag.appendChild(b);
+  }
+}
+
+async function toggleUser(id) {
+  const r = await fetch(`/admin/api/users/${id}/toggle`, { method: 'POST' });
+  const d = await r.json();
+  if (d.success) loadUsers();
+  else alert(d.message);
+}
+
+async function resetPwd(id) {
+  if (!confirm('Reset password for this user?')) return;
+  const r = await fetch(`/admin/api/users/${id}/reset-password`, { method: 'POST' });
+  const d = await r.json();
+  if (d.success) alert(`New password: ${d.new_password}\n\nSave this!`);
+}
+
+// ── Create User ───────────────────────────────────────────────
+function openCreateUser(role = '') {
+  document.getElementById('cred-display').style.display = 'none';
+  document.getElementById('create-user-btn').style.display = 'inline-flex';
+  ['f-fname','f-lname','f-email','f-phone','f-spec','f-qual','f-regno'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  ['f-exp','f-fee'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '0';
+  });
+  document.getElementById('f-role').value   = role;
+  document.getElementById('f-gender').value = '';
+  toggleDoctorFields();
+  document.getElementById('modal-user').classList.add('open');
+}
+
+function toggleDoctorFields() {
+  const role = document.getElementById('f-role').value;
+  document.getElementById('doctor-fields').style.display = role === 'doctor' ? 'block' : 'none';
+}
+
+async function createUser() {
+  const data = {
+    first_name:      document.getElementById('f-fname').value.trim(),
+    last_name:       document.getElementById('f-lname').value.trim(),
+    email:           document.getElementById('f-email').value.trim(),
+    phone:           document.getElementById('f-phone').value.trim(),
+    role:            document.getElementById('f-role').value,
+    gender:          document.getElementById('f-gender').value,
+    department_id:   document.getElementById('f-dept')?.value,
+    specialization:  document.getElementById('f-spec')?.value,
+    qualification:   document.getElementById('f-qual')?.value,
+    experience_years:document.getElementById('f-exp')?.value,
+    registration_no: document.getElementById('f-regno')?.value,
+    consultation_fee:document.getElementById('f-fee')?.value,
+  };
+  const btn = document.getElementById('create-user-btn');
+  btn.disabled = true; btn.textContent = 'Creating...';
+  try {
+    const r = await fetch('/admin/api/users/create', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(data)
+    });
+    const d = await r.json();
+    if (d.success) {
+      document.getElementById('cred-username').textContent = d.credentials.username;
+      document.getElementById('cred-password').textContent = d.credentials.password;
+      document.getElementById('cred-display').style.display = 'block';
+      btn.style.display = 'none';
+      if (currentPage === 'users')   loadUsers();
+      if (currentPage === 'doctors') loadDoctors();
+    } else {
+      alert(d.message || 'Failed to create user');
+    }
+  } catch(e) { alert('Network error'); }
+  finally { btn.disabled = false; btn.textContent = 'Create User'; }
+}
+
+// ── Doctors ───────────────────────────────────────────────────
+async function loadDoctors() {
+  const search = document.getElementById('doc-search')?.value || '';
+  const dept   = document.getElementById('dept-filter')?.value || '';
+  const tbody  = document.getElementById('doctors-tbody');
+  tbody.innerHTML = '<tr><td colspan="6" class="loading">Loading...</td></tr>';
+  const r = await fetch(`/admin/api/doctors?search=${encodeURIComponent(search)}&department_id=${dept}`);
+  const d = await r.json();
+  if (!d.doctors.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">No doctors found</td></tr>';
+    return;
+  }
+  tbody.innerHTML = d.doctors.map(doc => `
+    <tr>
+      <td class="fw-500">${doc.full_name}</td>
+      <td>${doc.specialization || '—'}</td>
+      <td>${doc.department || '—'}</td>
+      <td>₹${Number(doc.consultation_fee).toLocaleString('en-IN')}</td>
+      <td><span class="badge ${doc.is_available ? 'badge-teal' : 'badge-red'}">${doc.is_available ? 'Available' : 'Unavailable'}</span></td>
+      <td>
+        <button class="btn btn-outline btn-sm" onclick="openSchedule(${doc.id})">Schedule</button>
+      </td>
+    </tr>`).join('');
+}
+
+async function loadDepartments() {
+  const r = await fetch('/admin/api/departments');
+  const d = await r.json();
+  departments = d.departments || [];
+  const sel = document.getElementById('f-dept');
+  const df  = document.getElementById('dept-filter');
+  if (sel) sel.innerHTML = '<option value="">Select dept</option>' + departments.map(dept => `<option value="${dept.id}">${dept.name}</option>`).join('');
+  if (df)  df.innerHTML  = '<option value="">All Departments</option>' + departments.map(dept => `<option value="${dept.id}">${dept.name}</option>`).join('');
+}
+
+// ── Schedule ──────────────────────────────────────────────────
+const DAYS = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+
+async function openSchedule(doctorId) {
+  currentDoctorId = doctorId;
+  document.getElementById('modal-schedule').classList.add('open');
+  const body = document.getElementById('schedule-body');
+  body.innerHTML = '<div class="loading">Loading schedule...</div>';
+  const r = await fetch(`/admin/api/doctors/${doctorId}/schedule`);
+  const d = await r.json();
+  const schedMap = {};
+  (d.schedules || []).forEach(s => schedMap[s.day_of_week] = s);
+  body.innerHTML = DAYS.map(day => {
+    const s = schedMap[day] || {};
+    return `
+    <div class="day-schedule">
+      <div class="day-header">
+        <input type="checkbox" id="chk-${day}" ${s.start_time ? 'checked' : ''} onchange="toggleDay('${day}')"/>
+        <div class="day-label">${day.charAt(0).toUpperCase()+day.slice(1)}</div>
+      </div>
+      <div id="day-fields-${day}" style="display:${s.start_time ? 'grid' : 'none'};grid-template-columns:repeat(4,1fr);gap:10px">
+        <div class="form-group"><label>Start</label><input type="time" id="st-${day}" value="${s.start_time || '09:00'}"/></div>
+        <div class="form-group"><label>End</label><input type="time" id="et-${day}" value="${s.end_time || '17:00'}"/></div>
+        <div class="form-group"><label>Slot (min)</label><input type="number" id="sl-${day}" value="${s.slot_duration || 15}" min="5" max="60"/></div>
+        <div class="form-group"><label>Max patients</label><input type="number" id="mp-${day}" value="${s.max_patients || 20}" min="1"/></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleDay(day) {
+  const checked = document.getElementById('chk-' + day).checked;
+  document.getElementById('day-fields-' + day).style.display = checked ? 'grid' : 'none';
+}
+
+async function saveSchedule() {
+  const schedules = [];
+  DAYS.forEach(day => {
+    if (document.getElementById('chk-' + day)?.checked) {
+      schedules.push({
+        day_of_week:   day,
+        start_time:    document.getElementById('st-' + day).value,
+        end_time:      document.getElementById('et-' + day).value,
+        slot_duration: parseInt(document.getElementById('sl-' + day).value),
+        max_patients:  parseInt(document.getElementById('mp-' + day).value),
+      });
+    }
+  });
+  const r = await fetch(`/admin/api/doctors/${currentDoctorId}/schedule`, {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ schedules })
+  });
+  const d = await r.json();
+  if (d.success) { closeModal('modal-schedule'); alert('Schedule saved!'); }
+  else alert(d.message || 'Failed to save');
+}
+
+// ── Departments ───────────────────────────────────────────────
+async function loadDepts() {
+  const r = await fetch('/admin/api/departments');
+  const d = await r.json();
+  document.getElementById('depts-tbody').innerHTML = (d.departments || []).map(dept => `
+    <tr>
+      <td class="fw-500">${dept.name}</td>
+      <td>${dept.floor || '—'}</td>
+      <td><span class="badge badge-teal">Active</span></td>
+    </tr>`).join('') || '<tr><td colspan="3" class="empty">No departments</td></tr>';
+}
+
+// ── Beds ──────────────────────────────────────────────────────
+async function loadBeds() {
+  const rs = await fetch('/admin/api/stats');
+  const ds = await rs.json();
+  if (ds.success) {
+    document.getElementById('bed-avail').textContent = ds.stats.beds_available;
+    document.getElementById('bed-occ').textContent   = ds.stats.beds_occupied;
+    document.getElementById('bed-clean').textContent = '—';
+    document.getElementById('bed-res').textContent   = '—';
+  }
+  document.getElementById('beds-tbody').innerHTML = '<tr><td colspan="4" class="empty">Bed details coming in Phase 5 (Ward Management)</td></tr>';
+}
+
+// ── Audit ─────────────────────────────────────────────────────
+async function loadAudit() {
+  const tbody = document.getElementById('audit-tbody');
+  tbody.innerHTML = '<tr><td colspan="6" class="loading">Loading...</td></tr>';
+  const r = await fetch(`/admin/api/audit-logs?page=${auditPage}`);
+  const d = await r.json();
+  if (!d.logs.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">No audit logs yet</td></tr>';
+    return;
+  }
+  const actionColors = { LOGIN:'teal', LOGOUT:'gray', CREATE_USER:'blue',
+    TOGGLE_USER_STATUS:'amber', PASSWORD_RESET:'red', UPDATE_SETTINGS:'purple' };
+  tbody.innerHTML = d.logs.map(l => `
+    <tr>
+      <td style="font-size:11px;white-space:nowrap">${l.created_at}</td>
+      <td>${l.user}</td>
+      <td><span class="badge badge-${actionColors[l.action]||'gray'}">${l.action}</span></td>
+      <td>${l.module}</td>
+      <td style="font-size:11px">${l.description}</td>
+      <td style="font-size:11px">${l.ip_address}</td>
+    </tr>`).join('');
+}
+
+// ── Settings ──────────────────────────────────────────────────
+async function loadSettings() {
+  const r = await fetch('/admin/api/settings');
+  const d = await r.json();
+  if (!d.success) return;
+  const s = d.settings;
+  const set = (id, key) => { const el = document.getElementById(id); if (el) el.value = s[key] || ''; };
+  set('s-name','hospital_name'); set('s-address','hospital_address');
+  set('s-phone','hospital_phone'); set('s-email','hospital_email');
+  set('s-gst','gst_number'); set('s-uhid','uhid_prefix');
+  set('s-slot','appointment_slot'); set('s-gstrate','gst_rate');
+  set('s-currency','currency_symbol');
+}
+
+async function saveSettings() {
+  const data = {
+    hospital_name:    document.getElementById('s-name').value,
+    hospital_address: document.getElementById('s-address').value,
+    hospital_phone:   document.getElementById('s-phone').value,
+    hospital_email:   document.getElementById('s-email').value,
+    gst_number:       document.getElementById('s-gst').value,
+    uhid_prefix:      document.getElementById('s-uhid').value,
+    appointment_slot: document.getElementById('s-slot').value,
+    gst_rate:         document.getElementById('s-gstrate').value,
+    currency_symbol:  document.getElementById('s-currency').value,
+  };
+  const r = await fetch('/admin/api/settings', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(data)
+  });
+  const d = await r.json();
+  alert(d.message || (d.success ? 'Saved!' : 'Failed'));
+}
+
+// ── Theme ─────────────────────────────────────────────────────
+function toggleTheme() {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', dark ? '' : 'dark');
+  localStorage.setItem('theme', dark ? 'light' : 'dark');
+  loadCharts();
+}
+
+// ── Modals ────────────────────────────────────────────────────
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ── Utility ───────────────────────────────────────────────────
+function debounce(fn, delay) {
+  let timer;
+  return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), delay); };
+}
+
+function timeAgo(isoStr) {
+  if (!isoStr) return '';
+  const diff = (Date.now() - new Date(isoStr)) / 1000;
+  if (diff < 60)   return Math.floor(diff) + 's ago';
+  if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+  if (diff < 86400)return Math.floor(diff/3600) + 'h ago';
+  return Math.floor(diff/86400) + 'd ago';
+}
+</script>
+</body>
+</html>

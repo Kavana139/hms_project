@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Billing — MediCore HMS</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue:#1a6fc4;--blue-light:#e8f1fb;--blue-dark:#155fa0;
+  --teal:#0f9e75;--teal-light:#e1f5ee;
+  --amber:#b45309;--amber-light:#fef3c7;
+  --red:#dc2626;--red-light:#fef2f2;
+  --green:#15803d;--green-light:#f0fdf4;
+  --gray:#6b7280;--border:#e5e7eb;
+  --sidebar-w:220px;--bg:#f1f5f9;--white:#fff;
+  --text:#1e293b;--text-sm:#64748b;--text-xs:#94a3b8;--radius:10px;
+}
+[data-theme=dark]{--bg:#0f172a;--white:#1e293b;--text:#f1f5f9;--text-sm:#94a3b8;--text-xs:#64748b;--border:#334155;--blue-light:#1e3a5f;--teal-light:#0d3324;--amber-light:#451a03;--red-light:#450a0a;--green-light:#052e16}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
+#sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;overflow-y:auto}
+.sidebar-brand{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.brand-icon{width:32px;height:32px;background:var(--green);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.brand-icon svg{width:16px;height:16px;fill:white}
+.brand-name{font-size:14px;font-weight:700}.brand-sub{font-size:10px;color:var(--text-xs)}
+.nav-section{font-size:10px;font-weight:600;color:var(--text-xs);text-transform:uppercase;letter-spacing:.08em;padding:12px 16px 4px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 12px;margin:1px 8px;border-radius:7px;cursor:pointer;font-size:13px;color:var(--text-sm);transition:all .15s;text-decoration:none}
+.nav-item:hover{background:var(--bg);color:var(--text)}
+.nav-item.active{background:var(--green-light);color:var(--green);font-weight:500}
+.nav-item svg{width:15px;height:15px;flex-shrink:0}
+.sidebar-footer{margin-top:auto;padding:12px;border-top:1px solid var(--border)}
+.user-card{display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;cursor:pointer}
+.user-card:hover{background:var(--bg)}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;flex-shrink:0}
+.user-name{font-size:12px;font-weight:500}.user-role{font-size:10px;color:var(--text-xs)}
+#main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column}
+#topbar{background:var(--white);border-bottom:1px solid var(--border);height:54px;display:flex;align-items:center;padding:0 20px;gap:10px;position:sticky;top:0;z-index:50}
+.topbar-title{font-size:15px;font-weight:600;flex:1}
+.topbar-btn{width:32px;height:32px;border-radius:7px;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-sm)}
+.topbar-btn:hover{background:var(--bg)}.topbar-btn svg{width:17px;height:17px}
+#content{padding:20px;flex:1}
+.page{display:none}.page.active{display:block;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.kpi{background:var(--white);border-radius:var(--radius);padding:14px 16px;border:1px solid var(--border)}
+.kpi-label{font-size:10px;font-weight:600;color:var(--text-xs);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.kpi-value{font-size:24px;font-weight:700;line-height:1}
+.card{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;margin-bottom:16px}
+.card-hdr{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:13px;font-weight:600}.card-body{padding:16px}
+.two-col{display:grid;grid-template-columns:1fr 1.3fr;gap:16px}
+.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:500}
+.badge-blue{background:var(--blue-light);color:var(--blue)}.badge-teal{background:var(--teal-light);color:var(--teal)}
+.badge-amber{background:var(--amber-light);color:var(--amber)}.badge-red{background:var(--red-light);color:var(--red)}
+.badge-green{background:var(--green-light);color:var(--green)}.badge-gray{background:var(--bg);color:var(--gray)}
+.btn{padding:8px 14px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all .15s;display:inline-flex;align-items:center;gap:5px}
+.btn-primary{background:var(--blue);color:#fff}.btn-primary:hover{background:var(--blue-dark)}
+.btn-green{background:var(--green);color:#fff}.btn-teal{background:var(--teal);color:#fff}
+.btn-outline{background:none;border:1px solid var(--border);color:var(--text)}.btn-outline:hover{background:var(--bg)}
+.btn-sm{padding:5px 10px;font-size:11px}
+.form-group{margin-bottom:12px}
+.form-group label{display:block;font-size:11px;font-weight:500;color:var(--text-sm);margin-bottom:4px}
+.form-group input,.form-group select{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;color:var(--text);background:var(--white);outline:none}
+.form-group input:focus,.form-group select:focus{border-color:var(--blue)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+table{width:100%;border-collapse:collapse}
+th{padding:9px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--text-xs);text-transform:uppercase;background:var(--bg);border-bottom:1px solid var(--border)}
+td{padding:10px 14px;font-size:13px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg)}
+.bill-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.bill-row:last-child{border-bottom:none}
+.bill-total{display:flex;justify-content:space-between;padding:10px 0;font-size:15px;font-weight:600}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-bg.open{display:flex}
+.modal{background:var(--white);border-radius:14px;width:100%;max-width:620px;max-height:92vh;overflow-y:auto;animation:mIn .2s ease}
+@keyframes mIn{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-hdr{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:14px;font-weight:600}
+.modal-close{background:none;border:none;cursor:pointer;color:var(--text-sm);font-size:16px;width:26px;height:26px;border-radius:5px}
+.modal-close:hover{background:var(--bg)}
+.modal-body{padding:18px}.modal-foot{padding:12px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+.search-wrap{position:relative}
+.search-wrap input{width:100%;padding:8px 10px 8px 32px;border:1px solid var(--border);border-radius:7px;font-size:13px;background:var(--white);color:var(--text);outline:none}
+.search-wrap input:focus{border-color:var(--blue)}
+.search-wrap svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--text-xs)}
+.search-dropdown{position:absolute;top:100%;left:0;right:0;background:var(--white);border:1px solid var(--border);border-top:none;border-radius:0 0 7px 7px;max-height:180px;overflow-y:auto;z-index:50;display:none}
+.search-dropdown.open{display:block}
+.search-opt{padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border)}
+.search-opt:hover{background:var(--bg)}.search-opt:last-child{border-bottom:none}
+.divider{height:1px;background:var(--border);margin:12px 0}
+.empty{text-align:center;padding:32px;color:var(--text-xs);font-size:13px}
+.loading{text-align:center;padding:20px;color:var(--text-xs)}
+.fw{font-weight:500}.ml-auto{margin-left:auto}
+.chart-wrap{height:180px;position:relative}
+.invoice-print{font-size:12px;line-height:1.6}
+.invoice-print table{width:100%;border-collapse:collapse;margin:10px 0}
+.invoice-print th{background:#f8f8f8;padding:6px 10px;text-align:left;font-size:11px;border-bottom:1px solid #ddd}
+.invoice-print td{padding:6px 10px;border-bottom:1px solid #eee}
+</style>
+</head>
+<body>
+<div id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon"><svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+    <div><div class="brand-name">MediCore HMS</div><div class="brand-sub">Billing</div></div>
+  </div>
+  <div class="nav-section">Billing</div>
+  <a class="nav-item active" onclick="showPage('overview')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Overview
+  </a>
+  <a class="nav-item" onclick="showPage('invoices')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>All Invoices
+  </a>
+  <a class="nav-item" onclick="showPage('create')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Create Invoice
+  </a>
+  <a class="nav-item" onclick="showPage('pending')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Pending Bills
+  </a>
+  <div class="sidebar-footer">
+    <div class="user-card" onclick="window.location='/auth/logout'">
+      <div class="avatar">BL</div>
+      <div><div class="user-name">Billing Staff</div><div class="user-role">Billing</div></div>
+    </div>
+  </div>
+</div>
+
+<div id="main">
+  <div id="topbar">
+    <div class="topbar-title" id="page-title">Overview</div>
+    <button class="topbar-btn" onclick="toggleTheme()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg></button>
+    <a href="/auth/logout" class="topbar-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg></a>
+  </div>
+  <div id="content">
+
+    <!-- OVERVIEW -->
+    <div class="page active" id="page-overview">
+      <div class="stat-row">
+        <div class="kpi"><div class="kpi-label">Revenue Today</div><div class="kpi-value" id="s-today" style="color:var(--teal)">—</div></div>
+        <div class="kpi"><div class="kpi-label">Revenue This Week</div><div class="kpi-value" id="s-week" style="color:var(--blue)">—</div></div>
+        <div class="kpi"><div class="kpi-label">Pending Bills</div><div class="kpi-value" id="s-pending" style="color:var(--amber)">—</div></div>
+        <div class="kpi"><div class="kpi-label">Paid Today</div><div class="kpi-value" id="s-paid" style="color:var(--green)">—</div></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><div class="card-title">Daily Revenue (last 7 days)</div></div>
+        <div class="card-body"><div class="chart-wrap"><canvas id="revenue-chart"></canvas></div></div>
+      </div>
+    </div>
+
+    <!-- ALL INVOICES -->
+    <div class="page" id="page-invoices">
+      <div class="card">
+        <div class="card-hdr">
+          <div class="card-title">All Invoices</div>
+          <div style="display:flex;gap:8px">
+            <div class="search-wrap" style="width:200px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input type="text" id="inv-search" placeholder="Search..." oninput="debounce(loadInvoices,400)()"/>
+            </div>
+            <select id="inv-status" onchange="loadInvoices()" style="padding:8px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;background:var(--white);color:var(--text)">
+              <option value="">All</option>
+              <option value="pending">Pending</option>
+              <option value="partial">Partial</option>
+              <option value="paid">Paid</option>
+            </select>
+          </div>
+        </div>
+        <table>
+          <thead><tr><th>Invoice No.</th><th>Patient</th><th>Date</th><th>Total</th><th>Paid</th><th>Balance</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="inv-tbody"><tr><td colspan="8" class="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CREATE INVOICE -->
+    <div class="page" id="page-create">
+      <div class="two-col" style="align-items:start">
+        <div class="card">
+          <div class="card-hdr"><div class="card-title">Create Invoice</div></div>
+          <div class="card-body">
+            <div id="create-alert" style="display:none;padding:10px;border-radius:7px;font-size:12px;margin-bottom:12px"></div>
+            <div class="form-group">
+              <label>Patient *</label>
+              <div class="search-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <input type="text" id="c-pt-search" placeholder="Search patient..." oninput="createPatientSearch()"/>
+                <div class="search-dropdown" id="c-pt-dropdown"></div>
+              </div>
+              <input type="hidden" id="c-pt-id"/>
+              <div id="c-pt-name" style="font-size:11px;color:var(--teal);margin-top:4px"></div>
+            </div>
+            <div class="divider"></div>
+            <div class="form-row-3">
+              <div class="form-group"><label>Description *</label><input type="text" id="c-desc" placeholder="Service..."/></div>
+              <div class="form-group"><label>Unit Price (₹)</label><input type="number" id="c-price" value="0" step="0.01"/></div>
+              <div class="form-group"><label>Qty</label><input type="number" id="c-qty" value="1" min="1"/></div>
+            </div>
+            <div class="form-group"><label>Type</label>
+              <select id="c-type">
+                <option value="consultation">Consultation</option>
+                <option value="lab">Lab Tests</option>
+                <option value="radiology">Radiology</option>
+                <option value="pharmacy">Pharmacy</option>
+                <option value="room">Room Charges</option>
+                <option value="procedure">Procedure</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="addItem()" style="margin-bottom:14px;width:100%">+ Add Line Item</button>
+            <div id="line-items"></div>
+            <div class="form-row" style="margin-top:8px">
+              <div class="form-group"><label>Discount %</label><input type="number" id="c-disc" value="0" min="0" max="100" oninput="recalcTotal()"/></div>
+              <div class="form-group"><label>GST %</label><input type="number" id="c-gst" value="18" min="0" oninput="recalcTotal()"/></div>
+            </div>
+            <div id="totals-preview" style="background:var(--bg);border-radius:8px;padding:12px;font-size:13px;display:none">
+              <div class="bill-row"><span>Subtotal</span><span id="t-sub">₹0</span></div>
+              <div class="bill-row"><span>Discount</span><span id="t-disc" style="color:var(--teal)">-₹0</span></div>
+              <div class="bill-row"><span id="t-gst-label">GST (18%)</span><span id="t-gst">₹0</span></div>
+              <div class="bill-total"><span>Total</span><span id="t-total" style="color:var(--teal)">₹0</span></div>
+            </div>
+            <button class="btn btn-green" onclick="generateInvoice()" style="width:100%;margin-top:10px">Generate Invoice</button>
+          </div>
+        </div>
+        <div class="card" id="invoice-created-card" style="display:none">
+          <div class="card-hdr"><div class="card-title">✓ Invoice Created</div></div>
+          <div class="card-body" id="invoice-created-body"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PENDING -->
+    <div class="page" id="page-pending">
+      <div class="card">
+        <div class="card-hdr"><div class="card-title">Pending & Partial Bills</div></div>
+        <table>
+          <thead><tr><th>Invoice No.</th><th>Patient</th><th>Date</th><th>Total</th><th>Balance</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="pending-tbody"><tr><td colspan="7" class="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- INVOICE DETAIL MODAL -->
+<div class="modal-bg" id="modal-invoice">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div>
+        <div class="modal-title" id="inv-modal-title">Invoice Details</div>
+        <div id="inv-modal-meta" style="font-size:11px;color:var(--text-xs);margin-top:2px"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-invoice')">✕</button>
+    </div>
+    <div class="modal-body" id="inv-modal-body">Loading...</div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('modal-invoice')">Close</button>
+      <button class="btn btn-outline" onclick="window.print()">Print</button>
+      <button class="btn btn-teal" id="pay-btn" onclick="openPayment()">Record Payment</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAYMENT MODAL -->
+<div class="modal-bg" id="modal-payment">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-hdr">
+      <div class="modal-title">Record Payment</div>
+      <button class="modal-close" onclick="closeModal('modal-payment')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label>Amount (₹) *</label><input type="number" id="pay-amount" step="0.01"/></div>
+      <div class="form-group"><label>Payment Mode *</label>
+        <select id="pay-mode">
+          <option value="cash">Cash</option>
+          <option value="card">Card</option>
+          <option value="upi">UPI</option>
+          <option value="net_banking">Net Banking</option>
+          <option value="insurance">Insurance</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Transaction ID</label><input type="text" id="pay-txn" placeholder="Optional"/></div>
+      <div id="pay-balance-info" style="font-size:12px;color:var(--text-xs);margin-top:4px"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('modal-payment')">Cancel</button>
+      <button class="btn btn-green" onclick="submitPayment()">Confirm Payment</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let lineItems   = [];
+let currentInvId = null;
+let revenueChart = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadStats();
+  loadChart();
+  if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+});
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+  const titles = { overview:'Overview', invoices:'All Invoices', create:'Create Invoice', pending:'Pending Bills' };
+  document.getElementById('page-title').textContent = titles[name] || name;
+  if (name === 'invoices') loadInvoices();
+  if (name === 'pending')  loadPending();
+}
+
+async function loadStats() {
+  const r = await fetch('/billing/api/stats');
+  const d = await r.json();
+  if (!d.success) return;
+  const s = d.stats;
+  document.getElementById('s-today').textContent   = '₹' + s.revenue_today.toLocaleString('en-IN', {maximumFractionDigits:0});
+  document.getElementById('s-week').textContent    = '₹' + s.revenue_week.toLocaleString('en-IN', {maximumFractionDigits:0});
+  document.getElementById('s-pending').textContent = s.pending_bills;
+  document.getElementById('s-paid').textContent    = s.paid_today;
+}
+
+async function loadChart() {
+  const r = await fetch('/billing/api/revenue/daily');
+  const d = await r.json();
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const tc = dark ? '#94a3b8' : '#64748b';
+  const gc = dark ? '#334155' : '#e2e8f0';
+  if (revenueChart) revenueChart.destroy();
+  revenueChart = new Chart(document.getElementById('revenue-chart'), {
+    type: 'bar',
+    data: { labels: d.labels,
+      datasets: [{ label: 'Revenue (₹)', data: d.data,
+        backgroundColor: '#0f9e7599', borderRadius: 6, borderSkipped: false }]
+    },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { grid: { color: gc }, ticks: { color: tc } },
+                y: { grid: { color: gc }, ticks: { color: tc,
+                     callback: v => '₹' + v.toLocaleString('en-IN') } } }
+    }
+  });
+}
+
+async function loadInvoices(page=1) {
+  const search = document.getElementById('inv-search')?.value || '';
+  const status = document.getElementById('inv-status')?.value || '';
+  const r = await fetch(`/billing/api/invoices?search=${encodeURIComponent(search)}&status=${status}&page=${page}`);
+  const d = await r.json();
+  const tbody = document.getElementById('inv-tbody');
+  const sc = { pending:'amber', partial:'blue', paid:'teal', cancelled:'gray', draft:'gray' };
+  tbody.innerHTML = d.invoices.length ? d.invoices.map(inv => `
+    <tr>
+      <td style="font-family:monospace;font-size:11px">${inv.invoice_no}</td>
+      <td><div class="fw">${inv.patient}</div><div style="font-size:10px;color:var(--text-xs)">${inv.uhid}</div></td>
+      <td>${inv.date}</td>
+      <td>₹${inv.total.toFixed(2)}</td>
+      <td style="color:var(--teal)">₹${inv.paid.toFixed(2)}</td>
+      <td style="color:${inv.balance>0?'var(--red)':'var(--teal)'}">₹${inv.balance.toFixed(2)}</td>
+      <td><span class="badge badge-${sc[inv.status]||'gray'}">${inv.status}</span></td>
+      <td><button class="btn btn-sm btn-outline" onclick="viewInvoice(${inv.id})">View</button></td>
+    </tr>`).join('') : '<tr><td colspan="8" class="empty">No invoices found</td></tr>';
+}
+
+async function loadPending() {
+  const r = await fetch('/billing/api/invoices?status=pending&page=1');
+  const r2 = await fetch('/billing/api/invoices?status=partial&page=1');
+  const [d1, d2] = await Promise.all([r.json(), r2.json()]);
+  const all = [...(d1.invoices||[]), ...(d2.invoices||[])];
+  const sc = { pending:'amber', partial:'blue' };
+  const tbody = document.getElementById('pending-tbody');
+  tbody.innerHTML = all.length ? all.map(inv => `
+    <tr>
+      <td style="font-family:monospace;font-size:11px">${inv.invoice_no}</td>
+      <td class="fw">${inv.patient}</td>
+      <td>${inv.date}</td>
+      <td>₹${inv.total.toFixed(2)}</td>
+      <td style="color:var(--red);font-weight:600">₹${inv.balance.toFixed(2)}</td>
+      <td><span class="badge badge-${sc[inv.status]||'gray'}">${inv.status}</span></td>
+      <td><button class="btn btn-sm btn-teal" onclick="viewInvoice(${inv.id})">Collect</button></td>
+    </tr>`).join('') : '<tr><td colspan="7" class="empty">No pending bills</td></tr>';
+}
+
+async function viewInvoice(id) {
+  currentInvId = id;
+  const r = await fetch(`/billing/api/invoices/${id}`);
+  const d = await r.json();
+  if (!d.success) return;
+  const inv = d.invoice;
+  const h   = d.hospital;
+  document.getElementById('inv-modal-title').textContent = `Invoice ${inv.invoice_no}`;
+  document.getElementById('inv-modal-meta').textContent  = `${inv.patient} · ${inv.uhid} · ${inv.date}`;
+  document.getElementById('pay-btn').style.display = inv.balance > 0 ? 'inline-flex' : 'none';
+  document.getElementById('inv-modal-body').innerHTML = `
+    <div class="invoice-print">
+      <div style="text-align:center;margin-bottom:14px">
+        <div style="font-size:16px;font-weight:700">${h.name}</div>
+        <div style="font-size:11px;color:var(--text-xs)">${h.address} · ${h.phone}</div>
+        <div style="font-size:11px;color:var(--text-xs)">GST: ${h.gst}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;font-size:12px">
+        <div><div style="color:var(--text-xs)">Patient</div><div class="fw">${inv.patient}</div><div style="color:var(--text-xs);margin-top:2px">UHID: ${inv.uhid}</div></div>
+        <div style="text-align:right"><div style="color:var(--text-xs)">Invoice No.</div><div class="fw" style="font-family:monospace">${inv.invoice_no}</div><div style="color:var(--text-xs);margin-top:2px">${inv.date}</div></div>
+      </div>
+      <table>
+        <thead><tr><th>Description</th><th>Type</th><th style="text-align:right">Qty</th><th style="text-align:right">Unit Price</th><th style="text-align:right">Total</th></tr></thead>
+        <tbody>${inv.items.map(i=>`<tr><td>${i.description}</td><td><span class="badge badge-gray">${i.item_type}</span></td><td style="text-align:right">${i.quantity}</td><td style="text-align:right">₹${i.unit_price.toFixed(2)}</td><td style="text-align:right">₹${i.total.toFixed(2)}</td></tr>`).join('')}</tbody>
+      </table>
+      <div style="margin-top:12px;max-width:260px;margin-left:auto">
+        <div class="bill-row"><span>Subtotal</span><span>₹${inv.subtotal.toFixed(2)}</span></div>
+        ${inv.discount_pct>0?`<div class="bill-row"><span>Discount (${inv.discount_pct}%)</span><span style="color:var(--teal)">-₹${inv.discount_amt.toFixed(2)}</span></div>`:''}
+        <div class="bill-row"><span>GST (${inv.gst_pct}%)</span><span>₹${inv.gst.toFixed(2)}</span></div>
+        <div class="bill-total"><span>Total</span><span>₹${inv.total.toFixed(2)}</span></div>
+        <div class="bill-row" style="color:var(--teal)"><span>Paid</span><span>₹${inv.paid.toFixed(2)}</span></div>
+        <div class="bill-total" style="color:${inv.balance>0?'var(--red)':'var(--teal)'}"><span>Balance</span><span>₹${inv.balance.toFixed(2)}</span></div>
+      </div>
+      ${inv.payments.length?`<div style="margin-top:12px"><div style="font-size:11px;font-weight:600;color:var(--text-xs);margin-bottom:6px">PAYMENT HISTORY</div>${inv.payments.map(p=>`<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>${p.date} · ${p.mode}</span><span style="color:var(--teal)">₹${p.amount.toFixed(2)}</span></div>`).join('')}</div>`:''}
+    </div>`;
+  document.getElementById('modal-invoice').classList.add('open');
+}
+
+function openPayment() {
+  if (!currentInvId) return;
+  document.getElementById('pay-amount').value = '';
+  document.getElementById('pay-txn').value    = '';
+  document.getElementById('modal-payment').classList.add('open');
+}
+
+async function submitPayment() {
+  const amt  = parseFloat(document.getElementById('pay-amount').value);
+  const mode = document.getElementById('pay-mode').value;
+  const txn  = document.getElementById('pay-txn').value;
+  if (!amt || amt <= 0) { alert('Enter valid amount'); return; }
+  const r = await fetch(`/billing/api/invoices/${currentInvId}/pay`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ amount: amt, mode, transaction_id: txn })
+  });
+  const d = await r.json();
+  if (d.success) {
+    closeModal('modal-payment');
+    closeModal('modal-invoice');
+    loadStats(); loadInvoices(); loadPending();
+    showToast(`Payment recorded! Balance: ₹${d.balance.toFixed(2)}`, 'success');
+  } else alert(d.message || 'Failed');
+}
+
+// Create Invoice
+function createPatientSearch() {
+  let timer;
+  clearTimeout(timer);
+  const q  = document.getElementById('c-pt-search').value.trim();
+  const dd = document.getElementById('c-pt-dropdown');
+  if (q.length < 2) { dd.classList.remove('open'); return; }
+  timer = setTimeout(async () => {
+    const r = await fetch(`/billing/api/patients/search?q=${encodeURIComponent(q)}`);
+    const d = await r.json();
+    if (!d.patients.length) { dd.classList.remove('open'); return; }
+    dd.innerHTML = d.patients.map(p => `
+      <div class="search-opt" onclick="selectPatient(${p.id},'${p.full_name}','${p.uhid}')">
+        ${p.full_name} <span style="font-size:11px;color:var(--text-xs)">${p.uhid}</span>
+      </div>`).join('');
+    dd.classList.add('open');
+  }, 300);
+}
+
+function selectPatient(id, name, uhid) {
+  document.getElementById('c-pt-id').value = id;
+  document.getElementById('c-pt-search').value = name;
+  document.getElementById('c-pt-name').textContent = `✓ ${uhid}`;
+  document.getElementById('c-pt-dropdown').classList.remove('open');
+}
+
+function addItem() {
+  const desc  = document.getElementById('c-desc').value.trim();
+  const price = parseFloat(document.getElementById('c-price').value);
+  const qty   = parseInt(document.getElementById('c-qty').value) || 1;
+  const type  = document.getElementById('c-type').value;
+  if (!desc || !price) { alert('Enter description and price'); return; }
+  lineItems.push({ description: desc, unit_price: price, quantity: qty, item_type: type });
+  renderItems();
+  document.getElementById('c-desc').value  = '';
+  document.getElementById('c-price').value = '0';
+  document.getElementById('c-qty').value   = '1';
+}
+
+function removeItem(i) { lineItems.splice(i, 1); renderItems(); }
+
+function renderItems() {
+  const el = document.getElementById('line-items');
+  if (!lineItems.length) { el.innerHTML = ''; document.getElementById('totals-preview').style.display = 'none'; return; }
+  el.innerHTML = lineItems.map((item, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px">
+      <div style="flex:1">${item.description} <span class="badge badge-gray">${item.item_type}</span></div>
+      <div>₹${item.unit_price.toFixed(2)} × ${item.quantity} = ₹${(item.unit_price*item.quantity).toFixed(2)}</div>
+      <button onclick="removeItem(${i})" style="background:none;border:none;color:var(--red);cursor:pointer">✕</button>
+    </div>`).join('');
+  recalcTotal();
+}
+
+function recalcTotal() {
+  if (!lineItems.length) return;
+  const sub  = lineItems.reduce((s, i) => s + i.unit_price * i.quantity, 0);
+  const disc = parseFloat(document.getElementById('c-disc').value) || 0;
+  const gst  = parseFloat(document.getElementById('c-gst').value) || 18;
+  const da   = sub * disc / 100;
+  const taxable = sub - da;
+  const gstAmt  = taxable * gst / 100;
+  const total   = taxable + gstAmt;
+  document.getElementById('totals-preview').style.display = 'block';
+  document.getElementById('t-sub').textContent   = '₹' + sub.toFixed(2);
+  document.getElementById('t-disc').textContent  = '-₹' + da.toFixed(2);
+  document.getElementById('t-gst-label').textContent = `GST (${gst}%)`;
+  document.getElementById('t-gst').textContent   = '₹' + gstAmt.toFixed(2);
+  document.getElementById('t-total').textContent = '₹' + total.toFixed(2);
+}
+
+async function generateInvoice() {
+  const ptId = document.getElementById('c-pt-id').value;
+  if (!ptId) { alert('Select a patient'); return; }
+  if (!lineItems.length) { alert('Add at least one item'); return; }
+  const r = await fetch('/billing/api/invoices/create', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      patient_id: parseInt(ptId),
+      items: lineItems,
+      discount_pct: parseFloat(document.getElementById('c-disc').value) || 0,
+      gst_pct: parseFloat(document.getElementById('c-gst').value) || 18,
+    })
+  });
+  const d = await r.json();
+  if (d.success) {
+    document.getElementById('invoice-created-card').style.display = 'block';
+    document.getElementById('invoice-created-body').innerHTML = `
+      <div style="background:var(--teal-light);border-radius:8px;padding:16px">
+        <div style="font-size:13px;font-weight:600;color:var(--teal);margin-bottom:8px">✓ Invoice Created!</div>
+        <div style="font-size:12px;margin-bottom:4px">Invoice No: <strong style="font-family:monospace">${d.invoice_no}</strong></div>
+        <div style="font-size:18px;font-weight:700;color:var(--teal)">₹${d.total.toFixed(2)}</div>
+      </div>
+      <button class="btn btn-outline btn-sm" style="margin-top:10px;width:100%" onclick="viewInvoice(${d.invoice_id})">View & Collect Payment</button>`;
+    lineItems = []; renderItems();
+    loadStats();
+  } else alert(d.message || 'Failed');
+}
+
+function showToast(msg, type='success') {
+  const t = document.createElement('div');
+  t.style.cssText = `position:fixed;top:70px;right:20px;padding:10px 16px;border-radius:8px;font-size:13px;z-index:300;background:${type==='success'?'var(--teal)':'var(--red)'};color:#fff`;
+  t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3500);
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function toggleTheme() {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', dark?'':'dark');
+  localStorage.setItem('theme', dark?'light':'dark');
+  loadChart();
+}
+function debounce(fn, delay) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), delay); }; }
+</script>
+</body>
+</html>

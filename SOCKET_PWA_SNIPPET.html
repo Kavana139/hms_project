@@ -1,0 +1,29 @@
+<!-- 
+  Add these 2 lines to the <head> of every dashboard HTML
+  (admin, doctor, receptionist, pharmacy, lab, patient, billing)
+  Place them just before </head>
+-->
+
+<!-- Socket.IO CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+<!-- MediCore Global Socket Client -->
+<script src="/static/js/socket.js"></script>
+
+<!-- PWA Meta Tags (add inside <head>) -->
+<link rel="manifest" href="/manifest.json"/>
+<meta name="theme-color" content="#1a6fc4"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="MediCore HMS"/>
+
+<!-- PWA Service Worker Registration (add before </body>) -->
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => console.log('SW registered'))
+      .catch(err => console.log('SW failed:', err));
+  });
+}
+</script>

@@ -1,0 +1,50 @@
+# MediCore HMS - Git Ignore
+
+# Environment & Secrets
+.env
+instance/
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Uploads
+app/static/uploads/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Migrations (keep folder, ignore versions optionally)
+# migrations/versions/
+
+# Testing
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Node (if any frontend tools)
+node_modules/

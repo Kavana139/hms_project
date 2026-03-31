@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Laboratory — MediCore HMS</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue:#1a6fc4;--blue-light:#e8f1fb;--blue-dark:#155fa0;
+  --teal:#0f9e75;--teal-light:#e1f5ee;
+  --amber:#b45309;--amber-light:#fef3c7;
+  --red:#dc2626;--red-light:#fef2f2;
+  --green:#15803d;--green-light:#f0fdf4;
+  --coral:#e11d48;--coral-light:#fff1f2;
+  --gray:#6b7280;--border:#e5e7eb;
+  --sidebar-w:220px;--bg:#f1f5f9;--white:#fff;
+  --text:#1e293b;--text-sm:#64748b;--text-xs:#94a3b8;--radius:10px;
+}
+[data-theme=dark]{--bg:#0f172a;--white:#1e293b;--text:#f1f5f9;--text-sm:#94a3b8;--text-xs:#64748b;--border:#334155;--blue-light:#1e3a5f;--teal-light:#0d3324;--amber-light:#451a03;--red-light:#450a0a;--green-light:#052e16;--coral-light:#4c0519}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
+#sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;overflow-y:auto}
+.sidebar-brand{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.brand-icon{width:32px;height:32px;background:var(--coral);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.brand-icon svg{width:16px;height:16px;fill:white}
+.brand-name{font-size:14px;font-weight:700}.brand-sub{font-size:10px;color:var(--text-xs)}
+.nav-section{font-size:10px;font-weight:600;color:var(--text-xs);text-transform:uppercase;letter-spacing:.08em;padding:12px 16px 4px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 12px;margin:1px 8px;border-radius:7px;cursor:pointer;font-size:13px;color:var(--text-sm);transition:all .15s;text-decoration:none}
+.nav-item:hover{background:var(--bg);color:var(--text)}
+.nav-item.active{background:var(--coral-light);color:var(--coral);font-weight:500}
+.nav-item svg{width:15px;height:15px;flex-shrink:0}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;border-radius:10px;padding:1px 6px;font-weight:600}
+.sidebar-footer{margin-top:auto;padding:12px;border-top:1px solid var(--border)}
+.user-card{display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;cursor:pointer}
+.user-card:hover{background:var(--bg)}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--coral);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;flex-shrink:0}
+.user-name{font-size:12px;font-weight:500}.user-role{font-size:10px;color:var(--text-xs)}
+#main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column}
+#topbar{background:var(--white);border-bottom:1px solid var(--border);height:54px;display:flex;align-items:center;padding:0 20px;gap:10px;position:sticky;top:0;z-index:50}
+.topbar-title{font-size:15px;font-weight:600;flex:1}
+.topbar-btn{width:32px;height:32px;border-radius:7px;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-sm)}
+.topbar-btn:hover{background:var(--bg)}.topbar-btn svg{width:17px;height:17px}
+.live-badge{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--teal);background:var(--teal-light);padding:4px 10px;border-radius:20px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+#content{padding:20px;flex:1}
+.page{display:none}.page.active{display:block;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.kpi{background:var(--white);border-radius:var(--radius);padding:14px 16px;border:1px solid var(--border)}
+.kpi-label{font-size:10px;font-weight:600;color:var(--text-xs);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.kpi-value{font-size:24px;font-weight:700;line-height:1}
+.card{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;margin-bottom:16px}
+.card-hdr{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:13px;font-weight:600}.card-body{padding:16px}
+.two-col{display:grid;grid-template-columns:1fr 1.4fr;gap:16px}
+.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:500}
+.badge-blue{background:var(--blue-light);color:var(--blue)}.badge-teal{background:var(--teal-light);color:var(--teal)}
+.badge-amber{background:var(--amber-light);color:var(--amber)}.badge-red{background:var(--red-light);color:var(--red)}
+.badge-green{background:var(--green-light);color:var(--green)}.badge-coral{background:var(--coral-light);color:var(--coral)}
+.badge-gray{background:var(--bg);color:var(--gray)}
+.btn{padding:8px 14px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all .15s;display:inline-flex;align-items:center;gap:5px}
+.btn-primary{background:var(--blue);color:#fff}.btn-primary:hover{background:var(--blue-dark)}
+.btn-coral{background:var(--coral);color:#fff}.btn-teal{background:var(--teal);color:#fff}
+.btn-outline{background:none;border:1px solid var(--border);color:var(--text)}.btn-outline:hover{background:var(--bg)}
+.btn-sm{padding:5px 10px;font-size:11px}
+.form-group{margin-bottom:12px}
+.form-group label{display:block;font-size:11px;font-weight:500;color:var(--text-sm);margin-bottom:4px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;color:var(--text);background:var(--white);outline:none}
+.form-group input:focus,.form-group select:focus{border-color:var(--blue)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-row-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px}
+table{width:100%;border-collapse:collapse}
+th{padding:9px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--text-xs);text-transform:uppercase;background:var(--bg);border-bottom:1px solid var(--border)}
+td{padding:10px 14px;font-size:13px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg)}
+.order-card{border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px;transition:box-shadow .15s}
+.order-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.order-card.urgent{border-left:3px solid var(--red)}
+.order-card.stat{border-left:3px solid var(--coral)}
+.order-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+.order-patient{font-size:14px;font-weight:600}
+.order-meta{font-size:11px;color:var(--text-xs);margin-top:2px}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-bg.open{display:flex}
+.modal{background:var(--white);border-radius:14px;width:100%;max-width:700px;max-height:92vh;overflow-y:auto;animation:mIn .2s ease}
+@keyframes mIn{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-hdr{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:14px;font-weight:600}
+.modal-close{background:none;border:none;cursor:pointer;color:var(--text-sm);font-size:16px;width:26px;height:26px;border-radius:5px}
+.modal-close:hover{background:var(--bg)}
+.modal-body{padding:18px}.modal-foot{padding:12px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+.result-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 80px;gap:8px;align-items:center;margin-bottom:8px;padding:8px;border:1px solid var(--border);border-radius:6px}
+.result-label{font-size:12px;font-weight:500}
+.divider{height:1px;background:var(--border);margin:12px 0}
+.empty{text-align:center;padding:32px;color:var(--text-xs);font-size:13px}
+.loading{text-align:center;padding:20px;color:var(--text-xs)}
+.fw{font-weight:500}.ml-auto{margin-left:auto}
+.report-table{width:100%;border-collapse:collapse}
+.report-table th{background:var(--bg);padding:8px 12px;text-align:left;font-size:11px;font-weight:600;color:var(--text-xs);border-bottom:1px solid var(--border)}
+.report-table td{padding:8px 12px;font-size:12px;border-bottom:1px solid var(--border)}
+.critical-row{background:var(--red-light)!important}
+.flag-high{color:var(--red);font-weight:600}.flag-low{color:var(--blue);font-weight:600}.flag-normal{color:var(--teal)}.flag-critical{color:var(--coral);font-weight:700}
+</style>
+</head>
+<body>
+<div id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon"><svg viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v11m0 0l-3 3m3-3l3 3m6-9v11m0 0l-3 3m3-3l3 3"/></svg></div>
+    <div><div class="brand-name">MediCore HMS</div><div class="brand-sub">Laboratory</div></div>
+  </div>
+  <div class="nav-section">Tests</div>
+  <a class="nav-item active" onclick="showPage('queue')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/></svg>
+    Pending Orders <span class="nav-badge" id="pending-badge">0</span>
+  </a>
+  <a class="nav-item" onclick="showPage('results')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>
+    Enter Results
+  </a>
+  <a class="nav-item" onclick="showPage('completed')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    Completed
+  </a>
+  <div class="nav-section">Catalog</div>
+  <a class="nav-item" onclick="showPage('catalog')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+    Test Catalog
+  </a>
+  <a class="nav-item" onclick="showPage('add-test')" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Add Test
+  </a>
+  <div class="sidebar-footer">
+    <div class="user-card" onclick="window.location='/auth/logout'">
+      <div class="avatar">LB</div>
+      <div><div class="user-name">Lab Tech</div><div class="user-role">Laboratory</div></div>
+    </div>
+  </div>
+</div>
+
+<div id="main">
+  <div id="topbar">
+    <div class="topbar-title" id="page-title">Pending Orders</div>
+    <div class="live-badge"><span class="live-dot"></span>Live</div>
+    <button class="topbar-btn" onclick="toggleTheme()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg></button>
+    <a href="/auth/logout" class="topbar-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg></a>
+  </div>
+
+  <div id="content">
+
+    <!-- QUEUE -->
+    <div class="page active" id="page-queue">
+      <div class="stat-row">
+        <div class="kpi"><div class="kpi-label">Pending Tests</div><div class="kpi-value" id="s-pending" style="color:var(--amber)">—</div></div>
+        <div class="kpi"><div class="kpi-label">Completed Today</div><div class="kpi-value" id="s-done" style="color:var(--teal)">—</div></div>
+        <div class="kpi"><div class="kpi-label">Urgent / STAT</div><div class="kpi-value" id="s-urgent" style="color:var(--red)">—</div></div>
+        <div class="kpi"><div class="kpi-label">Critical Results</div><div class="kpi-value" id="s-critical" style="color:var(--coral)">—</div></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr">
+          <div class="card-title">Pending Lab Orders</div>
+          <button class="btn btn-outline btn-sm" onclick="loadQueue()">↻ Refresh</button>
+        </div>
+        <div class="card-body" id="order-queue"><div class="loading">Loading...</div></div>
+      </div>
+    </div>
+
+    <!-- ENTER RESULTS -->
+    <div class="page" id="page-results">
+      <div class="card">
+        <div class="card-hdr">
+          <div class="card-title">Select Order to Enter Results</div>
+          <button class="btn btn-outline btn-sm" onclick="loadQueue(); showPage('queue')">← Back to Queue</button>
+        </div>
+        <div class="card-body" id="results-order-list"><div class="empty">Loading orders...</div></div>
+      </div>
+    </div>
+
+    <!-- COMPLETED -->
+    <div class="page" id="page-completed">
+      <div class="card">
+        <div class="card-hdr"><div class="card-title">Completed Orders</div></div>
+        <table>
+          <thead><tr><th>Order No.</th><th>Patient</th><th>Doctor</th><th>Tests</th><th>Completed</th><th>Report</th></tr></thead>
+          <tbody id="completed-tbody"><tr><td colspan="6" class="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CATALOG -->
+    <div class="page" id="page-catalog">
+      <div class="card">
+        <div class="card-hdr"><div class="card-title">Lab Test Catalog</div></div>
+        <table>
+          <thead><tr><th>Test Name</th><th>Code</th><th>Category</th><th>Sample</th><th>TAT</th><th>Cost</th><th>Normal Range</th></tr></thead>
+          <tbody id="catalog-tbody"><tr><td colspan="7" class="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ADD TEST -->
+    <div class="page" id="page-add-test">
+      <div class="card" style="max-width:560px">
+        <div class="card-hdr"><div class="card-title">Add Test to Catalog</div></div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group"><label>Test Name *</label><input type="text" id="t-name" placeholder="e.g. Complete Blood Count"/></div>
+            <div class="form-group"><label>Code</label><input type="text" id="t-code" placeholder="e.g. CBC"/></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Category</label><input type="text" id="t-cat" placeholder="e.g. Haematology"/></div>
+            <div class="form-group"><label>Sample Type</label><input type="text" id="t-sample" placeholder="e.g. Blood"/></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Turnaround (hrs)</label><input type="number" id="t-tat" value="24" min="1"/></div>
+            <div class="form-group"><label>Cost (₹)</label><input type="number" id="t-cost" step="0.01" value="0"/></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Normal Range</label><input type="text" id="t-range" placeholder="e.g. 4000-11000 cells/μL"/></div>
+            <div class="form-group"><label>Unit</label><input type="text" id="t-unit" placeholder="e.g. cells/μL"/></div>
+          </div>
+          <div id="test-success" style="display:none;background:var(--teal-light);color:var(--teal);padding:10px;border-radius:7px;font-size:12px;margin-bottom:8px">Test added!</div>
+          <button class="btn btn-coral" onclick="addTest()" style="width:100%">Add Test</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- RESULT ENTRY MODAL -->
+<div class="modal-bg" id="modal-results">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-hdr">
+      <div>
+        <div class="modal-title" id="result-modal-title">Enter Test Results</div>
+        <div id="result-modal-meta" style="font-size:11px;color:var(--text-xs);margin-top:2px"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-results')">✕</button>
+    </div>
+    <div class="modal-body" id="result-modal-body">Loading...</div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('modal-results')">Cancel</button>
+      <button class="btn btn-teal" onclick="submitResults()">Save Results</button>
+    </div>
+  </div>
+</div>
+
+<!-- REPORT MODAL -->
+<div class="modal-bg" id="modal-report">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-hdr">
+      <div class="modal-title">Lab Report</div>
+      <button class="modal-close" onclick="closeModal('modal-report')">✕</button>
+    </div>
+    <div class="modal-body" id="report-body">Loading...</div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('modal-report')">Close</button>
+      <button class="btn btn-coral" onclick="window.print()">Print Report</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentOrderId = null;
+let allOrders = [];
+
+document.addEventListener('DOMContentLoaded',()=>{
+  loadStats(); loadQueue();
+  setInterval(loadQueue,30000);
+  if (localStorage.getItem('theme')==='dark') document.documentElement.setAttribute('data-theme','dark');
+});
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  event.currentTarget.classList.add('active');
+  const titles={queue:'Pending Orders',results:'Enter Results',completed:'Completed Orders',catalog:'Test Catalog','add-test':'Add Test'};
+  document.getElementById('page-title').textContent=titles[name]||name;
+  if(name==='results') renderResultsList();
+  if(name==='completed') loadCompleted();
+  if(name==='catalog') loadCatalog();
+}
+
+async function loadStats() {
+  const r = await fetch('/lab/api/stats');
+  const d = await r.json();
+  if (!d.success) return;
+  document.getElementById('s-pending').textContent  = d.stats.pending;
+  document.getElementById('s-done').textContent     = d.stats.completed_today;
+  document.getElementById('s-urgent').textContent   = d.stats.urgent;
+  document.getElementById('s-critical').textContent = d.stats.critical;
+  document.getElementById('pending-badge').textContent = d.stats.pending;
+}
+
+async function loadQueue() {
+  const r = await fetch('/lab/api/orders?status=pending');
+  const d = await r.json();
+  allOrders = d.orders || [];
+  const el = document.getElementById('order-queue');
+  if (!allOrders.length) { el.innerHTML='<div class="empty">No pending orders</div>'; return; }
+  const prioColor={routine:'gray',urgent:'red',stat:'coral'};
+  const statusColor={ordered:'blue',sample_collected:'amber',processing:'teal'};
+  el.innerHTML = allOrders.map(o=>`
+    <div class="order-card ${o.priority==='urgent'||o.priority==='stat'?o.priority:''}">
+      <div class="order-hdr">
+        <div>
+          <div class="order-patient">${o.patient} <span style="font-size:11px;color:var(--text-xs);font-weight:400">${o.uhid}</span></div>
+          <div class="order-meta">By ${o.doctor} · ${o.ordered_at}</div>
+          <div class="order-meta" style="font-family:monospace">${o.order_no}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <span class="badge badge-${prioColor[o.priority]||'gray'}">${o.priority.toUpperCase()}</span>
+          <span class="badge badge-${statusColor[o.status]||'gray'}">${o.status.replace('_',' ')}</span>
+        </div>
+      </div>
+      <div style="margin-bottom:10px;display:flex;flex-wrap:wrap;gap:4px">
+        ${o.tests.map(t=>`<span class="badge badge-blue">${t.test_name}</span>`).join('')}
+      </div>
+      <div style="display:flex;gap:6px">
+        ${o.status==='ordered'?`<button class="btn btn-sm btn-outline" onclick="collectSample(${o.id})">📋 Collect Sample</button>`:''}
+        ${o.status==='sample_collected'?`<button class="btn btn-sm btn-outline" onclick="startProcessing(${o.id})">⚗️ Start Processing</button>`:''}
+        ${o.status==='processing'?`<button class="btn btn-sm btn-coral" onclick="openResults(${o.id})">Enter Results</button>`:''}
+        ${o.status==='sample_collected'?`<button class="btn btn-sm btn-coral" onclick="openResults(${o.id})">Enter Results</button>`:''}
+      </div>
+    </div>`).join('');
+  loadStats();
+}
+
+async function collectSample(id) {
+  const r = await fetch(`/lab/api/orders/${id}/collect`,{method:'POST'});
+  const d = await r.json();
+  if (d.success) { loadQueue(); showToast(d.message,'success'); }
+}
+
+async function startProcessing(id) {
+  const r = await fetch(`/lab/api/orders/${id}/process`,{method:'POST'});
+  const d = await r.json();
+  if (d.success) { loadQueue(); showToast(d.message,'success'); }
+}
+
+function renderResultsList() {
+  const el = document.getElementById('results-order-list');
+  const processing = allOrders.filter(o=>o.status==='processing'||o.status==='sample_collected');
+  if (!processing.length) { el.innerHTML='<div class="empty">No orders ready for result entry. Collect samples first.</div>'; return; }
+  el.innerHTML = processing.map(o=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)">
+      <div>
+        <div style="font-size:13px;font-weight:600">${o.patient} <span style="font-size:11px;color:var(--text-xs)">${o.order_no}</span></div>
+        <div style="font-size:11px;color:var(--text-xs)">${o.tests.map(t=>t.test_name).join(', ')}</div>
+      </div>
+      <button class="btn btn-sm btn-coral" onclick="openResults(${o.id})">Enter Results</button>
+    </div>`).join('');
+}
+
+function openResults(orderId) {
+  currentOrderId = orderId;
+  const order = allOrders.find(o=>o.id===orderId);
+  if (!order) return;
+  document.getElementById('result-modal-title').textContent = `Results: ${order.patient}`;
+  document.getElementById('result-modal-meta').textContent  = `${order.order_no} · ${order.doctor}`;
+  const body = document.getElementById('result-modal-body');
+  body.innerHTML = order.tests.map(t=>`
+    <div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:10px">${t.test_name}</div>
+      <div class="form-row-4">
+        <div class="form-group"><label>Result Value</label><input type="text" id="res-val-${t.item_id}" placeholder="e.g. 12.5"/></div>
+        <div class="form-group"><label>Unit</label><input type="text" id="res-unit-${t.item_id}" placeholder="e.g. g/dL"/></div>
+        <div class="form-group"><label>Normal Range</label><input type="text" id="res-range-${t.item_id}" value="${t.normal_range||''}"/></div>
+        <div class="form-group"><label>Flag</label>
+          <select id="res-flag-${t.item_id}">
+            <option value="normal">Normal</option>
+            <option value="high">High ↑</option>
+            <option value="low">Low ↓</option>
+            <option value="critical">Critical ⚠</option>
+          </select>
+        </div>
+      </div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
+        <input type="checkbox" id="res-crit-${t.item_id}"/> Mark as Critical (alert doctor)
+      </label>
+    </div>`).join('');
+  document.getElementById('modal-results').classList.add('open');
+}
+
+async function submitResults() {
+  const order = allOrders.find(o=>o.id===currentOrderId);
+  if (!order) return;
+  const results = order.tests.map(t=>({
+    item_id:     t.item_id,
+    value:       document.getElementById(`res-val-${t.item_id}`)?.value||'',
+    unit:        document.getElementById(`res-unit-${t.item_id}`)?.value||'',
+    normal_range:document.getElementById(`res-range-${t.item_id}`)?.value||'',
+    flag:        document.getElementById(`res-flag-${t.item_id}`)?.value||'normal',
+    is_critical: document.getElementById(`res-crit-${t.item_id}`)?.checked||false,
+  }));
+  const r = await fetch('/lab/api/results/enter',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({order_id:currentOrderId,results})
+  });
+  const d = await r.json();
+  if (d.success) {
+    closeModal('modal-results');
+    loadQueue(); loadStats();
+    if (d.has_critical) showToast('⚠ Critical result! Doctor has been notified.','warning');
+    else showToast('Results saved successfully!','success');
+  } else alert(d.message||'Failed');
+}
+
+async function loadCompleted() {
+  const r = await fetch('/lab/api/orders?status=completed');
+  const d = await r.json();
+  const tbody = document.getElementById('completed-tbody');
+  if (!d.orders.length) { tbody.innerHTML='<tr><td colspan="6" class="empty">No completed orders</td></tr>'; return; }
+  tbody.innerHTML = d.orders.map(o=>`
+    <tr>
+      <td style="font-family:monospace;font-size:12px">${o.order_no}</td>
+      <td class="fw">${o.patient}</td>
+      <td>${o.doctor}</td>
+      <td>${o.tests.map(t=>`<span class="badge badge-blue" style="margin-right:3px">${t.test_name}</span>`).join('')}</td>
+      <td style="font-size:12px">${o.ordered_at}</td>
+      <td><button class="btn btn-sm btn-outline" onclick="viewReport(${o.id})">View Report</button></td>
+    </tr>`).join('');
+}
+
+async function viewReport(orderId) {
+  const r = await fetch(`/lab/api/orders/${orderId}/report`);
+  const d = await r.json();
+  if (!d.success) return;
+  const rpt = d.report;
+  document.getElementById('report-body').innerHTML = `
+    <div style="padding:10px 0">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+        <div><div style="font-size:11px;color:var(--text-xs)">Patient</div><div class="fw">${rpt.patient}</div></div>
+        <div><div style="font-size:11px;color:var(--text-xs)">UHID</div><div class="fw">${rpt.uhid}</div></div>
+        <div><div style="font-size:11px;color:var(--text-xs)">Age/Gender</div><div class="fw">${rpt.age_gender}</div></div>
+        <div><div style="font-size:11px;color:var(--text-xs)">Referred By</div><div class="fw">${rpt.doctor}</div></div>
+        <div><div style="font-size:11px;color:var(--text-xs)">Ordered At</div><div class="fw">${rpt.ordered_at}</div></div>
+        <div><div style="font-size:11px;color:var(--text-xs)">Completed At</div><div class="fw">${rpt.completed_at}</div></div>
+      </div>
+      <table class="report-table">
+        <thead><tr><th>Test Name</th><th>Result</th><th>Unit</th><th>Normal Range</th><th>Flag</th></tr></thead>
+        <tbody>
+          ${rpt.tests.map(t=>`
+            <tr class="${t.is_critical?'critical-row':''}">
+              <td class="fw">${t.name}</td>
+              <td style="font-weight:600">${t.result}</td>
+              <td>${t.unit}</td>
+              <td>${t.normal_range}</td>
+              <td><span class="flag-${t.flag}">${t.flag.toUpperCase()}${t.is_critical?' ⚠':''}</span></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  document.getElementById('modal-report').classList.add('open');
+}
+
+async function loadCatalog() {
+  const r = await fetch('/lab/api/tests');
+  const d = await r.json();
+  const tbody = document.getElementById('catalog-tbody');
+  if (!d.tests.length) { tbody.innerHTML='<tr><td colspan="7" class="empty">No tests in catalog</td></tr>'; return; }
+  tbody.innerHTML = d.tests.map(t=>`
+    <tr>
+      <td class="fw">${t.name}</td>
+      <td style="font-family:monospace;font-size:11px">${t.code||'—'}</td>
+      <td><span class="badge badge-blue">${t.category||'—'}</span></td>
+      <td>${t.sample_type||'—'}</td>
+      <td>${t.turnaround_hrs}h</td>
+      <td>₹${t.cost.toFixed(2)}</td>
+      <td style="font-size:11px;color:var(--text-xs)">${t.normal_range||'—'}</td>
+    </tr>`).join('');
+}
+
+async function addTest() {
+  const data={
+    name:document.getElementById('t-name').value.trim(),
+    code:document.getElementById('t-code').value.trim(),
+    category:document.getElementById('t-cat').value.trim(),
+    sample_type:document.getElementById('t-sample').value.trim(),
+    turnaround_hrs:document.getElementById('t-tat').value,
+    cost:document.getElementById('t-cost').value,
+    normal_range:document.getElementById('t-range').value.trim(),
+    unit:document.getElementById('t-unit').value.trim(),
+  };
+  if (!data.name){alert('Test name required');return;}
+  const r=await fetch('/lab/api/tests/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  const d=await r.json();
+  if(d.success){
+    document.getElementById('test-success').style.display='block';
+    setTimeout(()=>document.getElementById('test-success').style.display='none',3000);
+    ['t-name','t-code','t-cat','t-sample','t-range','t-unit'].forEach(id=>document.getElementById(id).value='');
+  } else alert(d.message);
+}
+
+function showToast(msg,type='success'){
+  const t=document.createElement('div');
+  t.style.cssText=`position:fixed;top:70px;right:20px;padding:10px 16px;border-radius:8px;font-size:13px;z-index:300;background:${type==='success'?'var(--teal)':type==='warning'?'var(--red)':'var(--blue)'};color:#fff`;
+  t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),3500);
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function toggleTheme(){
+  const dark=document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme',dark?'':'dark');
+  localStorage.setItem('theme',dark?'light':'dark');
+}
+</script>
+</body>
+</html>
