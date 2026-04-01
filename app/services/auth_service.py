@@ -24,14 +24,14 @@ def generate_uhid():
 
 
 def generate_password(length=10):
-    """Generate a strong random password"""
-    chars = string.ascii_letters + string.digits + '@!'
+    """Generate a strong alphanumeric password — no special chars to avoid URL encoding issues"""
+    chars = string.ascii_letters + string.digits  # safe: no %, $, @, # which break DATABASE_URL
     while True:
         pwd = ''.join(secrets.choice(chars) for _ in range(length))
+        # Only require upper + lower + digit — no special chars
         if (any(c.isupper() for c in pwd) and
             any(c.islower() for c in pwd) and
-            any(c.isdigit() for c in pwd) and
-            any(c in '!@#$%' for c in pwd)):
+            any(c.isdigit() for c in pwd)):
             return pwd
 
 

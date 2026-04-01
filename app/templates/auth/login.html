@@ -205,25 +205,37 @@ document.getElementById('login-form').addEventListener('submit', async function(
   };
 
   try {
-    const res  = await fetch('/auth/login', {
+    const res = await fetch('/auth/login', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify(body)
     });
-    const data = await res.json();
-
-    if(data.success){
+    let data;
+    try {
+      data = await res.json();
+    } catch(jsonErr) {
+      // Server returned non-JSON (crash/500)
+      showAlert('Server error (status ' + res.status + '). Please try again or contact admin.');
+      return;
+    }
+    if (data.success) {
       showAlert('Login successful! Redirecting...', 'success');
-      setTimeout(()=>{ window.location.href = data.redirect; }, 600);
+      setTimeout(() => { window.location.href = data.redirect; }, 500);
     } else {
-      showAlert(data.message || 'Login failed. Please try again.');
+      showAlert(data.message || 'Login failed. Check your credentials.');
       document.getElementById('password').value = '';
+      document.getElementById('password').focus();
     }
   } catch(err) {
-    showAlert('Network error. Please try again.');
+    if (!navigator.onLine) {
+      showAlert('No internet connection. Please check your network.');
+    } else {
+      showAlert('Cannot reach server. Make sure the app is running on localhost:5000');
+    }
   } finally {
     btn.disabled = false;
     spinner.style.display = 'none';
+    btn.querySelector('span') && (btn.querySelector('span').textContent = 'Sign In');
   }
 });
 </script>

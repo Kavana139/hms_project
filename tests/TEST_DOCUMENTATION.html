@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>MediCore HMS — Software Testing Documentation</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f8fafc;color:#1e293b;font-size:14px;line-height:1.6}
+.container{max-width:960px;margin:0 auto;padding:30px 20px}
+h1{font-size:26px;color:#1a6fc4;margin-bottom:4px}
+h2{font-size:18px;color:#1a6fc4;margin:28px 0 12px;padding-bottom:6px;border-bottom:2px solid #1a6fc4}
+h3{font-size:15px;color:#0f9e75;margin:16px 0 8px}
+.subtitle{color:#64748b;font-size:13px;margin-bottom:24px}
+.cover{background:linear-gradient(135deg,#1a6fc4,#0f9e75);color:#fff;border-radius:14px;padding:30px;margin-bottom:28px}
+.cover h1{color:#fff;font-size:28px}
+.cover .meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:18px;font-size:13px}
+.cover .meta div{background:rgba(255,255,255,.15);padding:8px 12px;border-radius:8px}
+.cover .meta strong{display:block;font-size:11px;opacity:.8;text-transform:uppercase;letter-spacing:.05em}
+table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:13px}
+th{background:#1a6fc4;color:#fff;padding:9px 12px;text-align:left;font-weight:600;font-size:12px;letter-spacing:.03em}
+td{padding:9px 12px;border-bottom:1px solid #e2e8f0;vertical-align:top}
+tr:nth-child(even) td{background:#f8fafc}
+tr:hover td{background:#f0f4f8}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-wb{background:#dbeafe;color:#1d4ed8}
+.badge-bb{background:#d1fae5;color:#065f46}
+.badge-pass{background:#d1fae5;color:#065f46}
+.badge-fail{background:#fee2e2;color:#991b1b}
+.badge-crit{background:#fef3c7;color:#92400e}
+.pass-row td{background:#f0fdf4!important}
+.code{background:#1e293b;color:#e2e8f0;border-radius:10px;padding:16px 20px;font-family:monospace;font-size:12px;margin:12px 0;overflow-x:auto;line-height:1.8}
+.code .green{color:#4ade80}.code .yellow{color:#fbbf24}.code .blue{color:#60a5fa}
+.code .red{color:#f87171}.code .gray{color:#94a3b8}
+.info-box{background:#e8f1fb;border-left:4px solid #1a6fc4;border-radius:0 8px 8px 0;padding:12px 16px;margin:12px 0;font-size:13px}
+.warn-box{background:#fef3c7;border-left:4px solid #f59e0b;border-radius:0 8px 8px 0;padding:12px 16px;margin:12px 0;font-size:13px}
+.section{background:#fff;border-radius:12px;padding:22px;margin-bottom:18px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0}
+.stat-card{background:#fff;border-radius:10px;padding:14px;text-align:center;border:1px solid #e2e8f0}
+.stat-val{font-size:28px;font-weight:700;line-height:1}
+.stat-label{font-size:11px;color:#64748b;margin-top:4px;text-transform:uppercase;letter-spacing:.05em}
+@media print{body{background:#fff}.container{padding:10px}
+  .section{box-shadow:none;border:1px solid #e2e8f0}
+  .code{border:1px solid #e2e8f0}}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Cover -->
+  <div class="cover">
+    <h1>🏥 MediCore HMS</h1>
+    <div style="font-size:18px;margin-top:4px;opacity:.9">Software Testing Documentation</div>
+    <div style="font-size:13px;margin-top:6px;opacity:.7">Hospital Management System — Patient & Auth Modules</div>
+    <div class="meta">
+      <div><strong>Project</strong>MediCore HMS v1.0</div>
+      <div><strong>Stack</strong>Python Flask + MySQL + Vanilla JS</div>
+      <div><strong>Testing Framework</strong>Python unittest</div>
+      <div><strong>Test File</strong>tests/test_suite.py</div>
+      <div><strong>Total Test Cases</strong>34 (15 Black Box + 19 White Box)</div>
+      <div><strong>Modules Tested</strong>Authentication, Patient Registration</div>
+    </div>
+  </div>
+
+  <!-- Test Summary -->
+  <div class="section">
+    <h2>1. Test Summary</h2>
+    <div class="summary-grid">
+      <div class="stat-card"><div class="stat-val" style="color:#1a6fc4">34</div><div class="stat-label">Total Tests</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:#0f9e75">19</div><div class="stat-label">White Box</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:#7c3aed">15</div><div class="stat-label">Black Box</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:#b45309">2</div><div class="stat-label">Modules</div></div>
+    </div>
+
+    <table>
+      <thead><tr><th>Type</th><th>Module</th><th>Class</th><th>Test Count</th><th>Focus</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge badge-wb">White Box</span></td><td>auth_service.py</td><td>WhiteBoxPasswordGenerator</td><td>9</td><td>Internal logic of generate_password()</td></tr>
+        <tr><td><span class="badge badge-wb">White Box</span></td><td>auth_service.py</td><td>WhiteBoxAuthService</td><td>4 + 6*</td><td>authenticate_user(), generate_username()</td></tr>
+        <tr><td><span class="badge badge-bb">Black Box</span></td><td>POST /auth/login</td><td>BlackBoxLoginAPI</td><td>15</td><td>All equivalence classes + boundary values</td></tr>
+        <tr><td><span class="badge badge-bb">Black Box</span></td><td>POST /patient/api/register</td><td>BlackBoxPatientRegistration</td><td>10</td><td>Registration input validation</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- White Box -->
+  <div class="section">
+    <h2>2. White Box Testing</h2>
+    <p style="color:#64748b;font-size:13px;margin-bottom:16px">
+      White box testing examines internal code structure, branches, and logic paths. The tester has full knowledge of the source code. We test the <strong>generate_password()</strong> and <strong>authenticate_user()</strong> functions in <code>app/services/auth_service.py</code>.
+    </p>
+
+    <h3>2.1 Module Under Test: generate_password()</h3>
+    <div class="code">
+<span class="green">def</span> generate_password(length=<span class="yellow">10</span>):
+    chars = string.ascii_letters + string.digits  <span class="gray"># safe alphanumeric only</span>
+    <span class="green">while True</span>:
+        pwd = <span class="blue">''.join</span>(secrets.choice(chars) <span class="green">for</span> _ <span class="green">in range</span>(length))
+        <span class="green">if</span> (<span class="blue">any</span>(c.isupper() <span class="green">for</span> c <span class="green">in</span> pwd) <span class="green">and</span>   <span class="gray"># ← Branch A</span>
+            <span class="blue">any</span>(c.islower() <span class="green">for</span> c <span class="green">in</span> pwd) <span class="green">and</span>   <span class="gray"># ← Branch B</span>
+            <span class="blue">any</span>(c.isdigit() <span class="green">for</span> c <span class="green">in</span> pwd)):      <span class="gray"># ← Branch C</span>
+            <span class="green">return</span> pwd
+    </div>
+
+    <table>
+      <thead><tr><th>Test ID</th><th>Test Name</th><th>Branch/Path Covered</th><th>Expected</th><th>Type</th></tr></thead>
+      <tbody>
+        <tr class="pass-row"><td>WB-PG-01</td><td>Default length is 10</td><td>Default parameter path</td><td>len(pwd) == 10</td><td>Path</td></tr>
+        <tr class="pass-row"><td>WB-PG-02</td><td>Custom length respected</td><td>Parameter binding path</td><td>len(pwd) == length</td><td>Path</td></tr>
+        <tr class="pass-row"><td>WB-PG-03</td><td>Contains uppercase</td><td>Branch A must be True</td><td>any(c.isupper())</td><td>Branch</td></tr>
+        <tr class="pass-row"><td>WB-PG-04</td><td>Contains lowercase</td><td>Branch B must be True</td><td>any(c.islower())</td><td>Branch</td></tr>
+        <tr class="pass-row"><td>WB-PG-05</td><td>Contains digit</td><td>Branch C must be True</td><td>any(c.isdigit())</td><td>Branch</td></tr>
+        <tr class="pass-row"><td>WB-PG-06</td><td>No URL-breaking chars</td><td>Charset definition</td><td>No %, $, @, # in pwd</td><td>Statement</td></tr>
+        <tr class="pass-row"><td>WB-PG-07</td><td>Only alphanumeric</td><td>Charset boundary</td><td>All chars in [a-zA-Z0-9]</td><td>Statement</td></tr>
+        <tr class="pass-row"><td>WB-PG-08</td><td>Passwords are unique</td><td>secrets.choice randomness</td><td>10 unique passwords</td><td>Path</td></tr>
+        <tr class="pass-row"><td>WB-PG-09</td><td>Terminates quickly</td><td>While loop termination</td><td>Completes &lt; 1 second</td><td>Loop</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn-box">
+      <strong>Bug Found During Testing:</strong> The original code had <code>any(c in '!@#$%' for c in pwd)</code> as a condition, but the charset excluded all special characters — causing an <strong>infinite loop</strong> that crashed the server with "Network error". Fixed by removing the impossible condition.
+    </div>
+
+    <h3>2.2 Module Under Test: generate_username()</h3>
+    <table>
+      <thead><tr><th>Test ID</th><th>Test Name</th><th>Branch Covered</th><th>Expected</th></tr></thead>
+      <tbody>
+        <tr class="pass-row"><td>WB-AU-01</td><td>Doctor prefix 'dr.'</td><td>Role → prefix mapping</td><td>Username starts with 'dr.'</td></tr>
+        <tr class="pass-row"><td>WB-AU-02</td><td>Receptionist prefix 'rec.'</td><td>Role → prefix mapping</td><td>Username starts with 'rec.'</td></tr>
+        <tr class="pass-row"><td>WB-AU-03</td><td>Collision counter increments</td><td>while loop (collision exists)</td><td>Numeric suffix appended</td></tr>
+        <tr class="pass-row"><td>WB-AU-04</td><td>Username safe chars only</td><td>Character filter</td><td>Only [a-z0-9.] in username</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Black Box -->
+  <div class="section">
+    <h2>3. Black Box Testing</h2>
+    <p style="color:#64748b;font-size:13px;margin-bottom:16px">
+      Black box testing treats the system as an opaque box — only inputs and outputs are examined. Uses <strong>Equivalence Class Partitioning</strong>, <strong>Boundary Value Analysis</strong>, and <strong>State Transition</strong> techniques.
+    </p>
+
+    <h3>3.1 Equivalence Classes — Login API</h3>
+    <table>
+      <thead><tr><th>Class</th><th>Condition</th><th>Valid / Invalid</th><th>Test IDs</th></tr></thead>
+      <tbody>
+        <tr><td>EC-1</td><td>Correct username + correct password</td><td>✅ Valid</td><td>BB-LG-01</td></tr>
+        <tr><td>EC-2</td><td>Correct email + correct password</td><td>✅ Valid</td><td>BB-LG-07</td></tr>
+        <tr><td>EC-3</td><td>Correct username + wrong password</td><td>❌ Invalid</td><td>BB-LG-02</td></tr>
+        <tr><td>EC-4</td><td>Non-existent username</td><td>❌ Invalid</td><td>BB-LG-03</td></tr>
+        <tr><td>EC-5</td><td>Locked account + correct password</td><td>❌ Invalid (State)</td><td>BB-LG-08</td></tr>
+        <tr><td>EC-6</td><td>Inactive account</td><td>❌ Invalid (State)</td><td>BB-LG-09</td></tr>
+        <tr><td>EC-7</td><td>SQL injection payload</td><td>❌ Security</td><td>BB-LG-10</td></tr>
+      </tbody>
+    </table>
+
+    <h3>3.2 Test Cases — POST /auth/login</h3>
+    <table>
+      <thead><tr><th>Test ID</th><th>Description</th><th>Input</th><th>Expected Output</th><th>Technique</th></tr></thead>
+      <tbody>
+        <tr class="pass-row"><td>BB-LG-01</td><td>Valid credentials</td><td>testadmin / TestPass123</td><td>success=true, redirect URL</td><td>Happy Path</td></tr>
+        <tr class="pass-row"><td>BB-LG-02</td><td>Wrong password</td><td>testadmin / WrongPass</td><td>success=false, message</td><td>Negative</td></tr>
+        <tr class="pass-row"><td>BB-LG-03</td><td>Non-existent user</td><td>nobody_xyz / anypass</td><td>success=false, not 500</td><td>Negative</td></tr>
+        <tr class="pass-row"><td>BB-LG-04</td><td>Empty username</td><td>"" / TestPass123</td><td>success=false, 400</td><td>Boundary</td></tr>
+        <tr class="pass-row"><td>BB-LG-05</td><td>Empty password</td><td>testadmin / ""</td><td>success=false</td><td>Boundary</td></tr>
+        <tr class="pass-row"><td>BB-LG-06</td><td>Both empty</td><td>"" / ""</td><td>success=false, 400</td><td>Boundary</td></tr>
+        <tr class="pass-row"><td>BB-LG-07</td><td>Login with email</td><td>admin@test.com / TestPass123</td><td>success=true</td><td>Equivalence</td></tr>
+        <tr class="pass-row"><td>BB-LG-08</td><td>Locked account</td><td>lockeduser / TestPass123</td><td>success=false, 'lock' in msg</td><td>State</td></tr>
+        <tr class="pass-row"><td>BB-LG-09</td><td>Inactive account</td><td>inactiveuser / TestPass123</td><td>success=false</td><td>State</td></tr>
+        <tr class="pass-row"><td>BB-LG-10</td><td>SQL injection</td><td>' OR 1=1; -- / anything</td><td>success=false, not 500</td><td>Security</td></tr>
+        <tr class="pass-row"><td>BB-LG-11</td><td>XSS in username</td><td>&lt;script&gt;alert(1)&lt;/script&gt;</td><td>Not 500</td><td>Security</td></tr>
+        <tr class="pass-row"><td>BB-LG-12</td><td>10,000-char username</td><td>'a' × 10000</td><td>Not 500</td><td>Boundary</td></tr>
+        <tr class="pass-row"><td>BB-LG-13</td><td>Uppercase email</td><td>ADMIN@TEST.COM</td><td>Not 500</td><td>Equivalence</td></tr>
+        <tr class="pass-row"><td>BB-LG-14</td><td>Response structure</td><td>Any request</td><td>'success' key present</td><td>Contract</td></tr>
+        <tr class="pass-row"><td>BB-LG-15</td><td>GET returns HTML</td><td>GET /auth/login</td><td>200, HTML page</td><td>Method</td></tr>
+      </tbody>
+    </table>
+
+    <h3>3.3 Test Cases — POST /patient/api/register</h3>
+    <table>
+      <thead><tr><th>Test ID</th><th>Description</th><th>Input Condition</th><th>Expected</th><th>Technique</th></tr></thead>
+      <tbody>
+        <tr class="pass-row"><td>BB-PR-01</td><td>Valid registration</td><td>All valid fields</td><td>success=true, UHID returned</td><td>Happy Path</td></tr>
+        <tr class="pass-row"><td>BB-PR-02</td><td>Missing first name</td><td>first_name absent</td><td>success=false</td><td>Negative</td></tr>
+        <tr class="pass-row"><td>BB-PR-03</td><td>Missing phone</td><td>phone absent</td><td>success=false</td><td>Negative</td></tr>
+        <tr class="pass-row"><td>BB-PR-04</td><td>Missing password</td><td>password absent</td><td>success=false</td><td>Negative</td></tr>
+        <tr class="pass-row"><td>BB-PR-05</td><td>Duplicate email</td><td>Same email twice</td><td>2nd: success=false</td><td>Negative</td></tr>
+        <tr class="pass-row"><td>BB-PR-06</td><td>Invalid gender</td><td>gender='helicopter'</td><td>Not 500</td><td>Boundary</td></tr>
+        <tr class="pass-row"><td>BB-PR-07</td><td>Empty email</td><td>email=""</td><td>success=false</td><td>Boundary</td></tr>
+        <tr class="pass-row"><td>BB-PR-08</td><td>UHID uniqueness</td><td>Two separate registrations</td><td>Different UHIDs</td><td>Contract</td></tr>
+        <tr class="pass-row"><td>BB-PR-09</td><td>SQL injection in name</td><td>'); DROP TABLE users;--</td><td>Not 500</td><td>Security</td></tr>
+        <tr class="pass-row"><td>BB-PR-10</td><td>JSON response</td><td>Any request</td><td>Content-Type: application/json</td><td>Contract</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- How to Run -->
+  <div class="section">
+    <h2>4. How to Run Tests</h2>
+
+    <h3>Prerequisites</h3>
+    <div class="code">
+<span class="gray"># Install test dependencies</span>
+pip install pytest pytest-cov
+
+<span class="gray"># Navigate to project root</span>
+cd medicore-hms
+    </div>
+
+    <h3>Run Full Test Suite</h3>
+    <div class="code">
+<span class="gray"># Option 1: Run directly</span>
+<span class="blue">python</span> tests/test_suite.py
+
+<span class="gray"># Option 2: Run with pytest (more detail)</span>
+<span class="blue">python</span> -m pytest tests/test_suite.py -v
+
+<span class="gray"># Option 3: Run with coverage report</span>
+<span class="blue">python</span> -m pytest tests/test_suite.py -v --cov=app --cov-report=term-missing
+
+<span class="gray"># Option 4: Run only White Box tests</span>
+<span class="blue">python</span> -m pytest tests/test_suite.py -v -k "WhiteBox"
+
+<span class="gray"># Option 5: Run only Black Box tests</span>
+<span class="blue">python</span> -m pytest tests/test_suite.py -v -k "BlackBox"
+    </div>
+
+    <h3>Expected Output</h3>
+    <div class="code">
+<span class="green">================================================================</span>
+<span class="blue">  MediCore HMS — Software Testing Suite</span>
+<span class="green">================================================================</span>
+
+<span class="yellow">WHITE BOX TESTS</span> — Internal code path verification
+<span class="gray">────────────────────────────────────────────────────</span>
+  <span class="green">✓ PASS</span>  Default length is 10 characters
+  <span class="green">✓ PASS</span>  Custom length parameter is respected
+  <span class="green">✓ PASS</span>  Password always contains uppercase letter
+  <span class="green">✓ PASS</span>  Password always contains lowercase letter
+  <span class="green">✓ PASS</span>  Password always contains a digit
+  <span class="green">✓ PASS</span>  Password has no URL-breaking special chars
+  <span class="green">✓ PASS</span>  All characters are alphanumeric
+  <span class="green">✓ PASS</span>  Consecutive passwords are unique
+  <span class="green">✓ PASS</span>  Function terminates quickly (no infinite loop)
+
+<span class="yellow">BLACK BOX TESTS</span> — External input/output behaviour
+<span class="gray">────────────────────────────────────────────────────</span>
+  <span class="green">✓ PASS</span>  Valid credentials return success
+  <span class="green">✓ PASS</span>  Wrong password returns failure message
+  ...
+
+<span class="green">================================================================</span>
+<span class="yellow">TEST SUMMARY</span>
+<span class="gray">────────────────────────────────────────────────────</span>
+  Total  : 34
+  <span class="green">Passed : 34</span>
+  <span class="green">Score  : 100%</span>
+<span class="green">================================================================</span>
+    </div>
+  </div>
+
+  <!-- Bug Report -->
+  <div class="section">
+    <h2>5. Bug Report</h2>
+    <table>
+      <thead><tr><th>Bug ID</th><th>Severity</th><th>Module</th><th>Description</th><th>Root Cause</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>BUG-001</td>
+          <td><span class="badge" style="background:#fee2e2;color:#991b1b">Critical</span></td>
+          <td>auth_service.py</td>
+          <td>Login shows "Network error" — server crashes on user creation</td>
+          <td>generate_password() had while loop requiring special chars not in charset → infinite loop</td>
+          <td><span class="badge badge-pass">Fixed</span></td>
+        </tr>
+        <tr>
+          <td>BUG-002</td>
+          <td><span class="badge" style="background:#fef3c7;color:#92400e">Medium</span></td>
+          <td>config.py</td>
+          <td>Rate limiter crashes on startup without Redis</td>
+          <td>RATELIMIT_STORAGE_URI not configured, Flask-Limiter tried to connect to Redis</td>
+          <td><span class="badge badge-pass">Fixed</span></td>
+        </tr>
+        <tr>
+          <td>BUG-003</td>
+          <td><span class="badge" style="background:#fef3c7;color:#92400e">Medium</span></td>
+          <td>auth_service.py</td>
+          <td>Passwords with @, %, $ in them break database connection</td>
+          <td>Special chars in password break pymysql connection URL string</td>
+          <td><span class="badge badge-pass">Fixed</span></td>
+        </tr>
+        <tr>
+          <td>BUG-004</td>
+          <td><span class="badge" style="background:#dbeafe;color:#1d4ed8">Low</span></td>
+          <td>admin/dashboard.html</td>
+          <td>Bed map shows "coming in Phase 5" placeholder text</td>
+          <td>Hard-coded placeholder instead of real API call</td>
+          <td><span class="badge badge-pass">Fixed</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="text-align:center;padding:20px;color:#94a3b8;font-size:12px;margin-top:10px">
+    MediCore HMS v1.0 — Software Testing Documentation &bull; Generated for Lab Evaluation
+  </div>
+
+</div>
+</body>
+</html>

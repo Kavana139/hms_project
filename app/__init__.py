@@ -66,7 +66,7 @@ def create_app(config_name='default'):
     from app.routes.receptionist import receptionist_bp
     from app.routes.pharmacy import pharmacy_bp
     from app.routes.lab import lab_bp
-    from app.routes.patient import patient_bp
+    #from app.routes.patient import patient_bp
     from app.routes.billing import billing_bp
     from app.routes.ward import ward_bp
     from app.routes.ot import ot_bp
@@ -84,7 +84,7 @@ def create_app(config_name='default'):
     app.register_blueprint(receptionist_bp, url_prefix='/receptionist')
     app.register_blueprint(pharmacy_bp, url_prefix='/pharmacy')
     app.register_blueprint(lab_bp, url_prefix='/lab')
-    app.register_blueprint(patient_bp, url_prefix='/patient')
+    #app.register_blueprint(patient_bp, url_prefix='/patient')
     app.register_blueprint(billing_bp, url_prefix='/billing')
     app.register_blueprint(ward_bp, url_prefix='/ward')
     app.register_blueprint(ot_bp, url_prefix='/ot')

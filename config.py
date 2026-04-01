@@ -11,8 +11,18 @@ class Config:
     TESTING = False
 
     # ── Database ──────────────────────────────────────────
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL',
-        'mysql+pymysql://root:password@localhost:3306/medicore_hms')
+    # Build URL from parts to safely handle special chars in password
+    @staticmethod
+    def _build_db_url():
+        from urllib.parse import quote_plus
+        user = os.environ.get('DB_USERNAME', 'root')
+        pwd  = os.environ.get('DB_PASSWORD', 'password')
+        host = os.environ.get('DB_HOST', 'localhost')
+        port = os.environ.get('DB_PORT', '3306')
+        name = os.environ.get('DB_NAME', 'medicore_hms')
+        return f"mysql+pymysql://{user}:{quote_plus(pwd)}@{host}:{port}/{name}"
+
+    SQLALCHEMY_DATABASE_URI = _build_db_url.__func__()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_recycle': 3600,
@@ -66,6 +76,10 @@ class Config:
 
     # ── Security ──────────────────────────────────────────
     MAX_LOGIN_ATTEMPTS = int(os.environ.get('MAX_LOGIN_ATTEMPTS', 5))
+    # Rate limiter — use in-memory to avoid Redis dependency
+    RATELIMIT_STORAGE_URI      = 'memory://'
+    RATELIMIT_DEFAULT          = '200 per minute'
+    RATELIMIT_HEADERS_ENABLED  = False
     LOCKOUT_DURATION = int(os.environ.get('LOCKOUT_DURATION', 900))
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
@@ -93,9 +107,15 @@ class ProductionConfig(Config):
 
 
 class TestingConfig(Config):
-    TESTING = True
+    TESTING               = True
+    DEBUG                 = False
     SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
-    WTF_CSRF_ENABLED = False
+    SQLALCHEMY_ENGINE_OPTIONS = {}
+    WTF_CSRF_ENABLED      = False
+    RATELIMIT_ENABLED     = False
+    RATELIMIT_STORAGE_URI = 'memory://'
+    MAIL_SUPPRESS_SEND    = True
+    SERVER_NAME           = None
 
 
 config = {
