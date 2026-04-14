@@ -180,6 +180,102 @@ def me():
     return jsonify({'success': True, 'user': current_user.to_dict()})
 
 
+
+
+# ── Email OTP for Staff Login ─────────────────────────────────
+
+@auth_bp.route('/send-login-otp', methods=['POST'])
+@limiter.limit('5 per minute')
+def send_login_otp():
+    """Validate credentials. If first-ever login → send OTP. Otherwise → login directly."""
+    data     = request.get_json() or request.form
+    username = (data.get('username') or '').strip()
+    password = data.get('password') or ''
+    remember = bool(data.get('remember', False))
+
+    user, error = authenticate_user(username, password, ip_address=request.remote_addr)
+    if error:
+        return jsonify({'success': False, 'message': error}), 401
+
+    # ── OTP only for FIRST login (last_login is None = never logged in before) ──
+    is_first_login = (user.last_login is None)
+
+    if is_first_login:
+        from app.services.auth_service import send_email_otp
+        send_email_otp(user)
+        # Store the REAL email in session (never send to frontend)
+        session['otp_real_email'] = user.email
+        session['otp_remember']   = remember
+        masked = user.email[:2] + '***@' + user.email.split('@')[-1]
+        return jsonify({
+            'success':      True,
+            'requires_otp': True,
+            'message':      f'First login detected. A verification code was sent to {masked}',
+            'email_hint':   masked,
+        })
+
+    # ── Returning user: skip OTP, login directly ──
+    if user.two_fa_enabled:
+        session['2fa_user_id']  = user.id
+        session['2fa_remember'] = remember
+        return jsonify({'success': True, 'requires_2fa': True,
+                        'redirect': url_for('auth.verify_2fa_route')})
+
+    _complete_login(user, remember)
+    return jsonify({'success': True, 'requires_otp': False,
+                    'redirect': get_dashboard_redirect(user.role_name)})
+
+
+@auth_bp.route('/verify-login-otp', methods=['POST'])
+@limiter.limit('10 per minute')
+def verify_login_otp():
+    """Step 2: verify OTP using session-stored real email (not masked frontend email)."""
+    data = request.get_json() or request.form
+    otp  = (data.get('otp') or '').strip()
+
+    # Get the REAL email from server session (never came from frontend)
+    real_email = session.get('otp_real_email', '').strip().lower()
+    remember   = session.get('otp_remember', False)
+
+    if not real_email:
+        return jsonify({'success': False,
+                        'message': 'Session expired. Please go back and login again.'}), 400
+    if not otp:
+        return jsonify({'success': False, 'message': 'Please enter the OTP.'}), 400
+
+    from app.services.auth_service import verify_email_otp
+    ok, msg = verify_email_otp(real_email, otp)
+    if not ok:
+        return jsonify({'success': False, 'message': msg}), 401
+
+    user = User.query.filter_by(email=real_email).first()
+    if not user or not user.is_active:
+        return jsonify({'success': False, 'message': 'User not found.'}), 404
+
+    session.pop('otp_real_email', None)
+    session.pop('otp_remember', None)
+    _complete_login(user, remember)
+    log_action(user_id=user.id, action='FIRST_LOGIN_OTP', module='auth',
+               description='First login completed via email OTP verification')
+    return jsonify({'success': True, 'redirect': get_dashboard_redirect(user.role_name)})
+
+
+@auth_bp.route('/resend-login-otp', methods=['POST'])
+@limiter.limit('3 per minute')
+def resend_login_otp():
+    """Resend OTP using session-stored real email."""
+    real_email = session.get('otp_real_email', '').strip().lower()
+    if not real_email:
+        return jsonify({'success': False,
+                        'message': 'Session expired. Please go back and login again.'}), 400
+    user = User.query.filter_by(email=real_email).first()
+    if not user:
+        return jsonify({'success': False, 'message': 'User not found.'}), 404
+    from app.services.auth_service import send_email_otp
+    send_email_otp(user)
+    return jsonify({'success': True, 'message': 'New OTP sent successfully.'})
+
+
 # ── Helpers ───────────────────────────────────────────────────
 
 def _complete_login(user, remember=False):

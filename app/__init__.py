@@ -60,41 +60,46 @@ def create_app(config_name='default'):
         return User.query.get(int(user_id))
 
     # ── Register Blueprints ───────────────────────────────
-    from app.routes.auth import auth_bp
-    from app.routes.admin import admin_bp
-    from app.routes.doctor import doctor_bp
-    from app.routes.receptionist import receptionist_bp
-    from app.routes.pharmacy import pharmacy_bp
-    from app.routes.lab import lab_bp
-    #from app.routes.patient import patient_bp
-    from app.routes.billing import billing_bp
-    from app.routes.ward import ward_bp
-    from app.routes.ot import ot_bp
-    from app.routes.inventory import inventory_bp
-    from app.routes.emergency import emergency_bp
-    from app.routes.bloodbank import bloodbank_bp
-    from app.routes.notifications import notifications_bp
-    from app.routes.calendar import calendar_bp
-    from app.routes.reports import reports_bp
-    from app.routes.api import api_bp
+    import traceback
 
-    app.register_blueprint(auth_bp, url_prefix='/auth')
-    app.register_blueprint(admin_bp, url_prefix='/admin')
-    app.register_blueprint(doctor_bp, url_prefix='/doctor')
-    app.register_blueprint(receptionist_bp, url_prefix='/receptionist')
-    app.register_blueprint(pharmacy_bp, url_prefix='/pharmacy')
-    app.register_blueprint(lab_bp, url_prefix='/lab')
-    #app.register_blueprint(patient_bp, url_prefix='/patient')
-    app.register_blueprint(billing_bp, url_prefix='/billing')
-    app.register_blueprint(ward_bp, url_prefix='/ward')
-    app.register_blueprint(ot_bp, url_prefix='/ot')
-    app.register_blueprint(inventory_bp, url_prefix='/inventory')
-    app.register_blueprint(emergency_bp, url_prefix='/emergency')
-    app.register_blueprint(bloodbank_bp, url_prefix='/bloodbank')
-    app.register_blueprint(notifications_bp, url_prefix='/notifications')
-    app.register_blueprint(calendar_bp, url_prefix='/calendar')
-    app.register_blueprint(reports_bp, url_prefix='/reports')
-    app.register_blueprint(api_bp, url_prefix='/api')
+    def safe_import(module_path, bp_name):
+        try:
+            import importlib
+            m = importlib.import_module(module_path)
+            return getattr(m, bp_name)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(
+                f"Failed to import {bp_name} from {module_path}: {e}\n{traceback.format_exc()}")
+            return None
+
+    blueprints = [
+        ('app.routes.auth',           'auth_bp',           '/auth'),
+        ('app.routes.admin',          'admin_bp',          '/admin'),
+        ('app.routes.doctor',         'doctor_bp',         '/doctor'),
+        ('app.routes.receptionist',   'receptionist_bp',   '/receptionist'),
+        ('app.routes.pharmacy',       'pharmacy_bp',       '/pharmacy'),
+        ('app.routes.lab',            'lab_bp',            '/lab'),
+        ('app.routes.patient',        'patient_bp',        '/patient'),
+        ('app.routes.billing',        'billing_bp',        '/billing'),
+        ('app.routes.ward',           'ward_bp',           '/ward'),
+        ('app.routes.ot',             'ot_bp',             '/ot'),
+        ('app.routes.inventory',      'inventory_bp',      '/inventory'),
+        ('app.routes.emergency',      'emergency_bp',      '/emergency'),
+        ('app.routes.bloodbank',      'bloodbank_bp',      '/bloodbank'),
+        ('app.routes.notifications',  'notifications_bp',  '/notifications'),
+        ('app.routes.calendar',       'calendar_bp',       '/calendar'),
+        ('app.routes.reports',        'reports_bp',        '/reports'),
+        ('app.routes.api',            'api_bp',            '/api'),
+    ]
+    for module_path, bp_name, prefix in blueprints:
+        bp = safe_import(module_path, bp_name)
+        if bp is not None:
+            try:
+                app.register_blueprint(bp, url_prefix=prefix)
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).error(f"Failed to register {bp_name}: {e}")
 
     # ── Register SocketIO events ──────────────────────────
     from app.sockets import notifications, bed_status, ot_status
@@ -112,3 +117,22 @@ def create_app(config_name='default'):
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
     return app
+
+def create_root_redirect(app):
+    """Add root redirect after app creation"""
+    from flask import redirect, url_for
+    from flask_login import current_user
+
+    @app.route('/')
+    def index():
+        if current_user.is_authenticated:
+            redirects = {
+                'admin': '/admin/dashboard',
+                'doctor': '/doctor/dashboard',
+                'receptionist': '/receptionist/dashboard',
+                'pharmacist': '/pharmacy/dashboard',
+                'lab_tech': '/lab/dashboard',
+                'patient': '/patient/dashboard',
+            }
+            return redirect(redirects.get(current_user.role_name, '/auth/login'))
+        return redirect(url_for('auth.login'))

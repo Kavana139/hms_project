@@ -159,11 +159,35 @@ def api_create_user():
             db.session.commit()
         db.session.add(Notification(
             user_id=user.id, title='Welcome to MediCore HMS',
-            message=f'Your account: Username={user.username}, Password={plain_pwd}',
+            message=f'Your account has been created. Username: {user.username}',
             notif_type='info', module='auth'))
         db.session.commit()
+
+        # Send welcome email with credentials
+        try:
+            from app.services.notification_service import send_email
+            role_label = data['role'].replace('_', ' ').title()
+            email_body = (
+                f"Dear {user.full_name},\n\n"
+                f"Welcome to MediCore HMS! Your {role_label} account has been created.\n\n"
+                f"Login Details:\n"
+                f"  URL:      http://localhost:5000/auth/login\n"
+                f"  Username: {user.username}\n"
+                f"  Password: {plain_pwd}\n\n"
+                f"Please log in and change your password immediately.\n\n"
+                f"Regards,\nMediCore HMS Administration"
+            )
+            send_email(
+                to      = user.email,
+                subject = f'Welcome to MediCore HMS — Your {role_label} Account',
+                body    = email_body,
+            )
+        except Exception as mail_err:
+            import logging
+            logging.getLogger(__name__).warning(f'Welcome email failed: {mail_err}')
+
         return jsonify({'success': True,
-                        'message': f'User {user.username} created!',
+                        'message': f'User {user.username} created! Credentials emailed to {user.email}.',
                         'credentials': {'username': user.username, 'password': plain_pwd}})
     except ValueError as e:
         return jsonify({'success': False, 'message': str(e)}), 400
@@ -271,3 +295,254 @@ def api_roles():
     roles = Role.query.all()
     return jsonify({'success': True,
                     'roles': [{'id': r.id, 'name': r.name} for r in roles]})
+
+
+# ── Bed & Ward Management ─────────────────────────────────────
+
+@admin_bp.route('/api/wards')
+@admin_required
+def api_wards():
+    wards = Ward.query.filter_by(is_active=True).all()
+    result = []
+    for w in wards:
+        total     = Bed.query.filter_by(ward_id=w.id, is_active=True).count()
+        available = Bed.query.filter_by(ward_id=w.id, status='available', is_active=True).count()
+        occupied  = Bed.query.filter_by(ward_id=w.id, status='occupied').count()
+        cleaning  = Bed.query.filter_by(ward_id=w.id, status='cleaning').count()
+        reserved  = Bed.query.filter_by(ward_id=w.id, status='reserved').count()
+        maintenance = Bed.query.filter_by(ward_id=w.id, status='maintenance').count()
+        result.append({
+            'id': w.id, 'name': w.name, 'ward_type': w.ward_type,
+            'floor': w.floor or '', 'charge_per_day': float(w.charge_per_day or 0),
+            'description': w.description or '',
+            'total': total, 'available': available, 'occupied': occupied,
+            'cleaning': cleaning, 'reserved': reserved, 'maintenance': maintenance,
+        })
+    return jsonify({'success': True, 'wards': result})
+
+
+@admin_bp.route('/api/wards/create', methods=['POST'])
+@admin_required
+def api_create_ward():
+    data = request.get_json() or {}
+    if not data.get('name'):
+        return jsonify({'success': False, 'message': 'Ward name is required'}), 400
+    ward = Ward(
+        name           = data['name'].strip(),
+        ward_type      = data.get('ward_type', 'general'),
+        floor          = data.get('floor', ''),
+        charge_per_day = float(data.get('charge_per_day', 0)),
+        description    = data.get('description', ''),
+        is_active      = True,
+    )
+    db.session.add(ward)
+    db.session.commit()
+    log_action(user_id=current_user.id, action='CREATE_WARD', module='admin',
+               description=f'Ward created: {ward.name}')
+    return jsonify({'success': True, 'message': f'Ward "{ward.name}" created!',
+                    'ward_id': ward.id})
+
+
+@admin_bp.route('/api/wards/<int:wid>', methods=['PUT'])
+@admin_required
+def api_update_ward(wid):
+    ward = Ward.query.get_or_404(wid)
+    data = request.get_json() or {}
+    if data.get('name'):        ward.name           = data['name'].strip()
+    if data.get('ward_type'):   ward.ward_type       = data['ward_type']
+    if data.get('floor') is not None: ward.floor     = data['floor']
+    if data.get('charge_per_day') is not None:
+        ward.charge_per_day = float(data['charge_per_day'])
+    if data.get('description') is not None: ward.description = data['description']
+    db.session.commit()
+    log_action(user_id=current_user.id, action='UPDATE_WARD', module='admin',
+               description=f'Ward updated: {ward.name}')
+    return jsonify({'success': True, 'message': 'Ward updated!'})
+
+
+@admin_bp.route('/api/wards/<int:wid>/deactivate', methods=['POST'])
+@admin_required
+def api_deactivate_ward(wid):
+    ward = Ward.query.get_or_404(wid)
+    occupied = Bed.query.filter_by(ward_id=wid, status='occupied').count()
+    if occupied:
+        return jsonify({'success': False,
+                        'message': f'Cannot deactivate: {occupied} bed(s) still occupied'}), 409
+    ward.is_active = False
+    db.session.commit()
+    return jsonify({'success': True, 'message': f'Ward "{ward.name}" deactivated'})
+
+
+@admin_bp.route('/api/beds')
+@admin_required
+def api_beds():
+    ward_id = request.args.get('ward_id')
+    status  = request.args.get('status')
+    q = Bed.query.join(Ward).filter(Bed.is_active == True)
+    if ward_id:
+        q = q.filter(Bed.ward_id == int(ward_id))
+    if status:
+        q = q.filter(Bed.status == status)
+    beds = q.order_by(Ward.name, Bed.bed_number).all()
+    return jsonify({'success': True, 'beds': [{
+        'id': b.id, 'bed_number': b.bed_number,
+        'ward_id': b.ward_id, 'ward_name': b.ward.name if b.ward else '',
+        'ward_type': b.ward.ward_type if b.ward else '',
+        'bed_type': b.bed_type, 'status': b.status,
+        'features': b.features or '',
+    } for b in beds]})
+
+
+@admin_bp.route('/api/beds/create', methods=['POST'])
+@admin_required
+def api_create_bed():
+    data = request.get_json() or {}
+    if not data.get('ward_id') or not data.get('bed_number'):
+        return jsonify({'success': False, 'message': 'ward_id and bed_number are required'}), 400
+    ward = Ward.query.get_or_404(int(data['ward_id']))
+    # Check duplicate bed number in same ward
+    existing = Bed.query.filter_by(ward_id=ward.id,
+                                   bed_number=data['bed_number'].strip()).first()
+    if existing:
+        return jsonify({'success': False,
+                        'message': f'Bed {data["bed_number"]} already exists in {ward.name}'}), 409
+    bed = Bed(
+        bed_number = data['bed_number'].strip(),
+        ward_id    = ward.id,
+        bed_type   = data.get('bed_type', 'standard'),
+        status     = 'available',
+        features   = data.get('features', ''),
+        is_active  = True,
+    )
+    db.session.add(bed)
+    db.session.commit()
+    log_action(user_id=current_user.id, action='CREATE_BED', module='admin',
+               description=f'Bed {bed.bed_number} added to {ward.name}')
+    return jsonify({'success': True,
+                    'message': f'Bed {bed.bed_number} added to {ward.name}!',
+                    'bed_id': bed.id})
+
+
+@admin_bp.route('/api/beds/bulk-create', methods=['POST'])
+@admin_required
+def api_bulk_create_beds():
+    data     = request.get_json() or {}
+    ward_id  = data.get('ward_id')
+    prefix   = data.get('prefix', 'B')
+    start    = int(data.get('start', 1))
+    count    = min(int(data.get('count', 1)), 50)  # max 50 at once
+    bed_type = data.get('bed_type', 'standard')
+    if not ward_id:
+        return jsonify({'success': False, 'message': 'ward_id required'}), 400
+    ward    = Ward.query.get_or_404(int(ward_id))
+    created = 0
+    skipped = 0
+    for i in range(start, start + count):
+        num = f'{prefix}{i:02d}'
+        if Bed.query.filter_by(ward_id=ward.id, bed_number=num).first():
+            skipped += 1
+            continue
+        db.session.add(Bed(bed_number=num, ward_id=ward.id,
+                           bed_type=bed_type, status='available', is_active=True))
+        created += 1
+    db.session.commit()
+    log_action(user_id=current_user.id, action='BULK_CREATE_BEDS', module='admin',
+               description=f'{created} beds created in {ward.name}')
+    msg = f'{created} beds created in {ward.name}'
+    if skipped:
+        msg += f' ({skipped} skipped — already exist)'
+    return jsonify({'success': True, 'message': msg, 'created': created})
+
+
+@admin_bp.route('/api/beds/<int:bid>/status', methods=['POST'])
+@admin_required
+def api_update_bed_status(bid):
+    bed    = Bed.query.get_or_404(bid)
+    data   = request.get_json() or {}
+    status = data.get('status')
+    allowed = ['available', 'occupied', 'cleaning', 'maintenance', 'reserved']
+    if status not in allowed:
+        return jsonify({'success': False, 'message': f'Status must be one of: {allowed}'}), 400
+    if bed.status == 'occupied' and status != 'occupied':
+        # Check if patient is still admitted
+        from app.models.clinical import Admission
+        active = Admission.query.filter_by(bed_id=bid, status='admitted').first()
+        if active:
+            return jsonify({'success': False,
+                            'message': 'Bed has an active admission. Discharge patient first.'}), 409
+    old_status = bed.status
+    bed.status = status
+    db.session.commit()
+    # Broadcast via Socket.IO
+    try:
+        from app import socketio
+        from app.sockets.bed_status import broadcast_bed_update
+        broadcast_bed_update(socketio, bid, status)
+    except Exception:
+        pass
+    log_action(user_id=current_user.id, action='UPDATE_BED_STATUS', module='admin',
+               description=f'Bed {bed.bed_number} status: {old_status} → {status}')
+    return jsonify({'success': True, 'message': f'Bed {bed.bed_number} set to {status}'})
+
+
+@admin_bp.route('/api/beds/<int:bid>', methods=['PUT'])
+@admin_required
+def api_update_bed(bid):
+    bed  = Bed.query.get_or_404(bid)
+    data = request.get_json() or {}
+    if data.get('bed_type'):   bed.bed_type = data['bed_type']
+    if data.get('features') is not None: bed.features = data['features']
+    if data.get('bed_number'): bed.bed_number = data['bed_number'].strip()
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Bed updated!'})
+
+
+@admin_bp.route('/api/beds/<int:bid>/deactivate', methods=['POST'])
+@admin_required
+def api_deactivate_bed(bid):
+    bed = Bed.query.get_or_404(bid)
+    if bed.status == 'occupied':
+        return jsonify({'success': False, 'message': 'Cannot deactivate occupied bed'}), 409
+    bed.is_active = False
+    db.session.commit()
+    return jsonify({'success': True, 'message': f'Bed {bed.bed_number} deactivated'})
+
+
+@admin_bp.route('/api/admissions')
+@admin_required
+def api_admissions():
+    from app.models.clinical import Admission
+    status = request.args.get('status', 'admitted')
+    admissions = Admission.query.filter_by(status=status)        .order_by(Admission.admission_date.desc()).limit(100).all()
+    result = []
+    for a in admissions:
+        result.append({
+            'id': a.id,
+            'admission_no': a.admission_no,
+            'patient': a.patient.full_name if a.patient else '',
+            'uhid': a.patient.uhid if a.patient else '',
+            'doctor': a.doctor.user.full_name if a.doctor and a.doctor.user else '',
+            'ward': a.ward.name if a.ward else '',
+            'bed': a.bed.bed_number if a.bed else '',
+            'admission_date': a.admission_date.strftime('%d %b %Y %H:%M'),
+            'reason': a.admission_reason or '',
+            'status': a.status,
+        })
+    return jsonify({'success': True, 'admissions': result})
+
+
+@admin_bp.route('/api/bed-stats')
+@admin_required
+def api_bed_stats():
+    stats = {
+        'total':       Bed.query.filter_by(is_active=True).count(),
+        'available':   Bed.query.filter_by(status='available', is_active=True).count(),
+        'occupied':    Bed.query.filter_by(status='occupied').count(),
+        'cleaning':    Bed.query.filter_by(status='cleaning').count(),
+        'maintenance': Bed.query.filter_by(status='maintenance').count(),
+        'reserved':    Bed.query.filter_by(status='reserved').count(),
+        'total_wards': Ward.query.filter_by(is_active=True).count(),
+    }
+    stats['occupancy_pct'] = round(
+        stats['occupied'] / stats['total'] * 100, 1) if stats['total'] else 0
+    return jsonify({'success': True, 'stats': stats})

@@ -26,6 +26,14 @@ def index():
     return redirect(url_for('auth.login'))
 
 if __name__ == '__main__':
+    # Start medicine reminder scheduler
+    with app.app_context():
+        try:
+            from app.services.notification_service import schedule_medicine_reminders
+            schedule_medicine_reminders(app)
+        except Exception as e:
+            print(f"Medicine reminder scheduler failed to start: {e}")
+
     print("=" * 60)
     print("  🏥  MediCore HMS — Starting Server")
     print("=" * 60)

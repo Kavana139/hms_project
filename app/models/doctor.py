@@ -54,7 +54,7 @@ class Doctor(db.Model):
             'department': self.department.name if self.department else None,
             'consultation_fee': float(self.consultation_fee or 0),
             'is_available': self.is_available,
-            'rating': float(self.rating or 0),
+            'rating': float(self.rating or 0) if hasattr(self, 'rating') and self.rating is not None else 0.0,
         }
 
     def __repr__(self):

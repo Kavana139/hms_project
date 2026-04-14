@@ -16,227 +16,312 @@
        background:var(--bg);min-height:100vh;display:flex;align-items:center;
        justify-content:center;padding:20px}
   .container{width:100%;max-width:420px}
-
-  /* Logo / Brand */
-  .brand{text-align:center;margin-bottom:32px}
+  .brand{text-align:center;margin-bottom:28px}
   .brand-icon{width:56px;height:56px;background:var(--blue);border-radius:14px;
-              display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px}
+              display:inline-flex;align-items:center;justify-content:center;margin-bottom:10px}
   .brand-icon svg{width:28px;height:28px;fill:white}
-  .brand h1{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-.3px}
+  .brand h1{font-size:22px;font-weight:700;color:var(--text)}
   .brand p{font-size:13px;color:var(--text-sm);margin-top:4px}
-
-  /* Card */
   .card{background:var(--white);border-radius:16px;padding:32px;
         box-shadow:0 4px 24px rgba(0,0,0,.08)}
-
-  .card h2{font-size:18px;font-weight:600;color:var(--text);margin-bottom:6px}
-  .card .subtitle{font-size:13px;color:var(--text-sm);margin-bottom:24px}
-
-  /* Form */
-  .form-group{margin-bottom:18px}
-  label{display:block;font-size:13px;font-weight:500;color:var(--text);margin-bottom:6px}
+  .card h2{font-size:17px;font-weight:700;color:var(--text);margin-bottom:4px}
+  .subtitle{font-size:13px;color:var(--text-sm);margin-bottom:22px}
+  .form-group{margin-bottom:16px}
+  label{display:block;font-size:13px;font-weight:500;color:var(--text);margin-bottom:5px}
   input{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;
-        font-size:14px;color:var(--text);outline:none;transition:border-color .2s,box-shadow .2s}
+        font-size:14px;color:var(--text);outline:none;transition:border-color .2s,box-shadow .2s;
+        background:var(--white)}
   input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,111,196,.12)}
-  input.error{border-color:var(--red)}
-
   .input-wrap{position:relative}
   .input-wrap input{padding-right:42px}
   .eye-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);
            background:none;border:none;cursor:pointer;color:var(--gray);padding:4px}
-
-  .remember-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+  .remember-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
   .remember-row label{display:flex;align-items:center;gap:7px;font-size:13px;
                        font-weight:400;color:var(--text-sm);cursor:pointer;margin:0}
   .remember-row a{font-size:13px;color:var(--blue);text-decoration:none}
-  .remember-row a:hover{text-decoration:underline}
-
   .btn{width:100%;padding:12px;background:var(--blue);color:#fff;border:none;
        border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;
-       transition:background .2s,transform .1s;letter-spacing:.2px}
+       transition:background .2s;letter-spacing:.2px;display:flex;align-items:center;justify-content:center;gap:8px}
   .btn:hover{background:var(--blue-dark)}
-  .btn:active{transform:scale(.98)}
   .btn:disabled{background:#93b4d8;cursor:not-allowed}
-
-  /* Alert */
-  .alert{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:18px;display:none}
+  .btn-outline{background:none;border:1.5px solid var(--border);color:var(--text)}
+  .btn-outline:hover{background:var(--bg)}
+  .alert{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px;display:none}
   .alert.error{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}
   .alert.success{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
+  .alert.info{background:var(--blue-light);color:var(--blue-dark);border:1px solid #bfdbfe}
   .alert.show{display:block}
-
-  /* Spinner */
-  .spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.4);
-           border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;
-           display:inline-block;vertical-align:middle;margin-right:8px;display:none}
+  .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.4);
+           border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
   @keyframes spin{to{transform:rotate(360deg)}}
 
-  /* Divider */
-  .divider{text-align:center;margin:22px 0;position:relative}
-  .divider::before{content:'';position:absolute;top:50%;left:0;right:0;
-                   height:1px;background:var(--border)}
-  .divider span{background:var(--white);padding:0 12px;
-                font-size:12px;color:var(--text-sm);position:relative}
-
-  /* Role pills */
-  .roles{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px}
-  .role-pill{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:500;
-             cursor:pointer;border:1.5px solid var(--border);color:var(--gray);
-             transition:all .15s;background:var(--white)}
-  .role-pill:hover,.role-pill.active{background:var(--blue-light);
-    border-color:var(--blue);color:var(--blue)}
+  /* OTP inputs */
+  .otp-row{display:flex;gap:10px;justify-content:center;margin:14px 0}
+  .otp-digit{width:48px;height:54px;border:1.5px solid var(--border);border-radius:10px;
+             font-size:22px;font-weight:700;text-align:center;color:var(--text);
+             background:var(--white);outline:none;-webkit-appearance:none}
+  .otp-digit:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,111,196,.12)}
+  .otp-info{text-align:center;font-size:13px;color:var(--text-sm);margin-bottom:6px}
+  .otp-email{font-weight:700;color:var(--text);display:block;font-size:14px;margin-bottom:4px}
+  .resend-row{text-align:center;margin-top:12px;font-size:13px;color:var(--text-sm)}
+  .resend-btn{background:none;border:none;color:var(--blue);cursor:pointer;font-size:13px;
+              font-weight:600;text-decoration:underline}
+  .step-indicator{display:flex;align-items:center;gap:6px;margin-bottom:18px}
+  .step-dot{width:8px;height:8px;border-radius:50%;background:var(--border)}
+  .step-dot.active{background:var(--blue)}
+  .step-dot.done{background:var(--teal)}
+  .back-btn{background:none;border:none;color:var(--text-sm);cursor:pointer;
+            font-size:13px;padding:0;margin-bottom:14px;display:flex;align-items:center;gap:4px}
 
   .footer-text{text-align:center;margin-top:20px;font-size:12px;color:var(--text-sm)}
-
-  /* Dark mode */
-  @media (prefers-color-scheme:dark){
+  @media(prefers-color-scheme:dark){
     :root{--bg:#0f172a;--white:#1e293b;--text:#f1f5f9;--text-sm:#94a3b8;
           --border:#334155;--blue-light:#1e3a5f}
-    input{background:#0f172a;color:#f1f5f9}
+    input,.otp-digit{background:#0f172a;color:#f1f5f9}
   }
 </style>
 </head>
 <body>
-
 <div class="container">
   <div class="brand">
     <div class="brand-icon">
-      <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2zm1 14h-2v-4H8l4-7 4 7h-3v4z"/></svg>
+      <svg viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zm-7 3a1 1 0 011 1v3h3a1 1 0 010 2h-3v3a1 1 0 01-2 0v-3H8a1 1 0 010-2h3V7a1 1 0 011-1z"/></svg>
     </div>
     <h1>MediCore HMS</h1>
     <p>Hospital Management System</p>
   </div>
 
   <div class="card">
-    <h2>Welcome back</h2>
-    <p class="subtitle">Sign in to your account to continue</p>
 
-    <div class="alert" id="alert"></div>
-
-    <form id="login-form" autocomplete="off">
+    <!-- STEP 1: Credentials -->
+    <div id="step-credentials">
+      <h2>Welcome back</h2>
+      <p class="subtitle">Sign in to your account</p>
+      <div class="alert error" id="alert-cred"></div>
       <div class="form-group">
         <label for="username">Username or Email</label>
-        <input type="text" id="username" name="username" placeholder="Enter username or email"
-               autocomplete="username" required/>
+        <input type="text" id="username" placeholder="username or email" autocomplete="username"/>
       </div>
-
       <div class="form-group">
         <label for="password">Password</label>
         <div class="input-wrap">
-          <input type="password" id="password" name="password"
-                 placeholder="Enter your password" autocomplete="current-password" required/>
-          <button type="button" class="eye-btn" onclick="togglePwd()" id="eye-btn"
-                  title="Show/hide password">
-            <svg id="eye-icon" width="18" height="18" fill="none" stroke="currentColor"
-                 stroke-width="1.8" viewBox="0 0 24 24">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-              <circle cx="12" cy="12" r="3"/>
-            </svg>
+          <input type="password" id="password" placeholder="••••••••" autocomplete="current-password"/>
+          <button class="eye-btn" type="button" onclick="togglePwd()" tabindex="-1">
+            <svg id="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           </button>
         </div>
       </div>
-
       <div class="remember-row">
-        <label>
-          <input type="checkbox" id="remember" name="remember"/>
-          Remember me for 24 hours
-        </label>
+        <label><input type="checkbox" id="remember"/> Remember me for 24h</label>
         <a href="/auth/forgot-password">Forgot password?</a>
       </div>
-
-      <button type="submit" class="btn" id="login-btn">
-        <span class="spinner" id="spinner"></span>
-        Sign In
+      <button class="btn" id="btn-cred" onclick="submitCredentials()">
+        <div class="spinner" id="spin-cred"></div>
+        <span>Continue</span>
       </button>
-    </form>
-
-    <div class="divider"><span>Quick access demo</span></div>
-
-    <div class="roles">
-      <div class="role-pill" onclick="fillDemo('admin','Admin@123')">Admin</div>
-      <div class="role-pill" onclick="fillDemo('doctor','Admin@123')">Doctor</div>
-      <div class="role-pill" onclick="fillDemo('receptionist','Admin@123')">Receptionist</div>
-      <div class="role-pill" onclick="fillDemo('pharmacist','Admin@123')">Pharmacist</div>
-      <div class="role-pill" onclick="fillDemo('lab_tech','Admin@123')">Lab Tech</div>
+      <p class="footer-text">Patient portal? <a href="/patient/login" style="color:var(--blue)">Sign in here</a></p>
     </div>
-  </div>
 
-  <div class="footer-text">
-    &copy; 2024 MediCore HMS &bull; Secure Hospital Management
+    <!-- STEP 2: OTP Verification -->
+    <div id="step-otp" style="display:none">
+      <button class="back-btn" onclick="goBack()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>
+      <div class="step-indicator">
+        <div class="step-dot done"></div>
+        <div style="flex:1;height:2px;background:var(--teal)"></div>
+        <div class="step-dot active"></div>
+      </div>
+      <h2>Verify your identity</h2>
+      <p class="subtitle">Email OTP verification</p>
+      <div class="alert error" id="alert-otp"></div>
+      <div class="otp-info">
+        A 6-digit code was sent to<br>
+        <span class="otp-email" id="otp-email-display"></span>
+      </div>
+      <div class="otp-row">
+        <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" id="otp0" oninput="otpInput(0)" onkeydown="otpKey(event,0)"/>
+        <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" id="otp1" oninput="otpInput(1)" onkeydown="otpKey(event,1)"/>
+        <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" id="otp2" oninput="otpInput(2)" onkeydown="otpKey(event,2)"/>
+        <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" id="otp3" oninput="otpInput(3)" onkeydown="otpKey(event,3)"/>
+        <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" id="otp4" oninput="otpInput(4)" onkeydown="otpKey(event,4)"/>
+        <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" id="otp5" oninput="otpInput(5)" onkeydown="otpKey(event,5)"/>
+      </div>
+      <button class="btn" id="btn-otp" onclick="verifyOtp()">
+        <div class="spinner" id="spin-otp"></div>
+        <span>Verify &amp; Sign In</span>
+      </button>
+      <div class="resend-row">
+        Didn't receive it? <button class="resend-btn" id="resend-btn" onclick="resendOtp()">Resend OTP</button>
+        <span id="resend-timer"></span>
+      </div>
+    </div>
+
   </div>
 </div>
 
 <script>
-function showAlert(msg, type='error'){
-  const a = document.getElementById('alert');
-  a.textContent = msg;
-  a.className = 'alert ' + type + ' show';
+let _otpEmail = ''; // kept for resend hint only
+let _resendTimer = null;
+
+// ── Step 1: Submit credentials ────────────────────────────
+async function submitCredentials() {
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  if (!username || !password) { showAlert('cred','Please enter username and password'); return; }
+
+  setLoading('cred', true);
+  hideAlert('cred');
+
+  try {
+    const res  = await fetch('/auth/send-login-otp', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({username, password, remember: document.getElementById('remember').checked})
+    });
+    const data = await res.json();
+
+    if (data.success && data.requires_otp) {
+      // First login — show OTP step
+      document.getElementById('otp-email-display').textContent = data.email_hint || '';
+      document.getElementById('step-credentials').style.display = 'none';
+      document.getElementById('step-otp').style.display = '';
+      document.getElementById('otp0').focus();
+      startResendTimer(60);
+    } else if (data.success && data.redirect) {
+      // Returning user — direct login (no OTP needed)
+      document.getElementById('btn-cred').querySelector('span').textContent = 'Signing in…';
+      window.location.href = data.redirect;
+    } else if (data.success && data.requires_2fa) {
+      // 2FA enabled user
+      window.location.href = data.redirect;
+    } else {
+      showAlert('cred', data.message || 'Login failed');
+      document.getElementById('password').value = '';
+    }
+  } catch(e) {
+    showAlert('cred', 'Cannot reach server. Make sure the app is running.');
+  } finally {
+    setLoading('cred', false);
+  }
 }
 
-function hideAlert(){
-  document.getElementById('alert').className = 'alert';
+// ── Step 2: Verify OTP ────────────────────────────────────
+async function verifyOtp() {
+  const otp = [...Array(6)].map((_,i) => document.getElementById('otp'+i).value).join('');
+  if (otp.length < 6) { showAlert('otp','Please enter all 6 digits'); return; }
+
+  setLoading('otp', true);
+  hideAlert('otp');
+
+  try {
+    const res  = await fetch('/auth/verify-login-otp', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({otp})   // server gets email from session — never from frontend
+    });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('btn-otp').querySelector('span').textContent = 'Signing in…';
+      window.location.href = data.redirect;
+    } else {
+      showAlert('otp', data.message || 'Invalid code');
+      // Clear OTP inputs
+      [...Array(6)].forEach((_,i) => { document.getElementById('otp'+i).value = ''; });
+      document.getElementById('otp0').focus();
+    }
+  } catch(e) {
+    showAlert('otp', 'Server error. Please try again.');
+  } finally {
+    setLoading('otp', false);
+  }
 }
 
-function togglePwd(){
+// ── Resend OTP ────────────────────────────────────────────
+async function resendOtp() {
+  document.getElementById('resend-btn').disabled = true;
+  try {
+    const res  = await fetch('/auth/resend-login-otp', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({email: _otpEmail})
+    });
+    const data = await res.json();
+    showAlert('otp', data.message, 'info');
+    startResendTimer(60);
+  } catch(e) {}
+}
+
+function startResendTimer(secs) {
+  clearInterval(_resendTimer);
+  document.getElementById('resend-btn').disabled = true;
+  const timer = document.getElementById('resend-timer');
+  let s = secs;
+  timer.textContent = `(${s}s)`;
+  _resendTimer = setInterval(() => {
+    s--;
+    if (s <= 0) {
+      clearInterval(_resendTimer);
+      timer.textContent = '';
+      document.getElementById('resend-btn').disabled = false;
+    } else {
+      timer.textContent = `(${s}s)`;
+    }
+  }, 1000);
+}
+
+// ── OTP digit inputs ──────────────────────────────────────
+function otpInput(i) {
+  const el = document.getElementById('otp'+i);
+  el.value = el.value.replace(/\D/g,'').slice(-1);
+  if (el.value && i < 5) document.getElementById('otp'+(i+1)).focus();
+  if (i === 5 && getOtp().length === 6) verifyOtp();
+}
+function otpKey(e, i) {
+  if (e.key === 'Backspace' && !document.getElementById('otp'+i).value && i > 0)
+    document.getElementById('otp'+(i-1)).focus();
+  if (e.key === 'Enter') verifyOtp();
+}
+function getOtp() {
+  return [...Array(6)].map((_,i) => document.getElementById('otp'+i).value).join('');
+}
+
+// ── Helpers ───────────────────────────────────────────────
+function goBack() {
+  document.getElementById('step-otp').style.display = 'none';
+  document.getElementById('step-credentials').style.display = '';
+  clearInterval(_resendTimer);
+}
+
+function togglePwd() {
   const inp = document.getElementById('password');
   inp.type = inp.type === 'password' ? 'text' : 'password';
 }
 
-function fillDemo(user, pass){
-  document.getElementById('username').value = user;
-  document.getElementById('password').value = pass;
-  document.querySelectorAll('.role-pill').forEach(p=>p.classList.remove('active'));
-  event.target.classList.add('active');
-  hideAlert();
+function setLoading(step, loading) {
+  const btn  = document.getElementById('btn-'+step);
+  const spin = document.getElementById('spin-'+step);
+  btn.disabled = loading;
+  spin.style.display = loading ? 'block' : 'none';
 }
 
-document.getElementById('login-form').addEventListener('submit', async function(e){
-  e.preventDefault();
-  hideAlert();
+function showAlert(step, msg, type='error') {
+  const el = document.getElementById('alert-'+step);
+  el.textContent = msg;
+  el.className = `alert ${type} show`;
+}
+function hideAlert(step) {
+  const el = document.getElementById('alert-'+step);
+  if (el) { el.className = 'alert error'; el.textContent = ''; }
+}
 
-  const btn     = document.getElementById('login-btn');
-  const spinner = document.getElementById('spinner');
-  btn.disabled  = true;
-  spinner.style.display = 'inline-block';
-
-  const body = {
-    username: document.getElementById('username').value.trim(),
-    password: document.getElementById('password').value,
-    remember: document.getElementById('remember').checked,
-  };
-
-  try {
-    const res = await fetch('/auth/login', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(body)
-    });
-    let data;
-    try {
-      data = await res.json();
-    } catch(jsonErr) {
-      // Server returned non-JSON (crash/500)
-      showAlert('Server error (status ' + res.status + '). Please try again or contact admin.');
-      return;
-    }
-    if (data.success) {
-      showAlert('Login successful! Redirecting...', 'success');
-      setTimeout(() => { window.location.href = data.redirect; }, 500);
-    } else {
-      showAlert(data.message || 'Login failed. Check your credentials.');
-      document.getElementById('password').value = '';
-      document.getElementById('password').focus();
-    }
-  } catch(err) {
-    if (!navigator.onLine) {
-      showAlert('No internet connection. Please check your network.');
-    } else {
-      showAlert('Cannot reach server. Make sure the app is running on localhost:5000');
-    }
-  } finally {
-    btn.disabled = false;
-    spinner.style.display = 'none';
-    btn.querySelector('span') && (btn.querySelector('span').textContent = 'Sign In');
-  }
+// Enter key on credentials
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('password').addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitCredentials();
+  });
+  document.getElementById('username').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('password').focus();
+  });
 });
 </script>
 </body>

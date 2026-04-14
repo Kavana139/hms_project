@@ -345,8 +345,71 @@ async function dispense(rxId) {
   if (!confirm('Dispense this prescription? Stock will be deducted.')) return;
   const r = await fetch(`/pharmacy/api/prescriptions/${rxId}/dispense`, {method:'POST'});
   const d = await r.json();
-  if (d.success) { loadQueue(); loadStats(); showToast(d.message,'success'); }
+  if (d.success) {
+    loadQueue(); loadStats(); showToast(d.message,'success');
+    // Auto generate bill for dispensed prescription
+    if (confirm('Prescription dispensed! Generate medicine bill for patient?')) {
+      generatePharmacyBill(rxId);
+    }
+  }
   else alert(d.message || 'Dispense failed. Check stock levels.');
+}
+
+async function generatePharmacyBill(rxId) {
+  // Fetch prescription details
+  const r = await fetch(`/pharmacy/api/prescriptions?status=dispensed`);
+  const d = await r.json();
+  if (!d.success) { showToast('Could not load prescription','error'); return; }
+  // Find the just-dispensed prescription
+  const rx = d.prescriptions.find(p => p.id === rxId) || d.prescriptions[0];
+  if (!rx) { showToast('Prescription not found','error'); return; }
+  // Build bill items from prescription items
+  const items = rx.items.map(i => ({
+    description: `${i.drug_name} (${i.dosage||''} ${i.frequency||''} x ${i.duration||''})`.trim(),
+    unit_price: 50, // default price - pharmacist can adjust
+    quantity: i.quantity || 1,
+    item_type: 'pharmacy'
+  }));
+  // Create invoice via billing API
+  const br = await fetch('/receptionist/api/billing/create', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ patient_id: rx.patient_id, items })
+  });
+  const bd = await br.json();
+  if (bd.success) {
+    showToast(`Bill ${bd.invoice_no} created! Total: ₹${bd.total.toFixed(2)}`, 'success');
+    // Show print option
+    const printNow = confirm(`Invoice ${bd.invoice_no} for ₹${bd.total.toFixed(2)} created!\n\nClick OK to print invoice.`);
+    if (printNow) printPharmacyInvoice(bd.invoice_id);
+  } else {
+    showToast(bd.message || 'Bill generation failed', 'error');
+  }
+}
+
+async function printPharmacyInvoice(invId) {
+  const r = await fetch(`/billing/api/invoices/${invId}`);
+  const d = await r.json();
+  if (!d.success) return;
+  const inv = d.invoice;
+  const h = d.hospital;
+  const itemsHtml = inv.items.map(i => `
+    <tr><td>${i.description}</td><td style="text-align:center">${i.quantity}</td><td style="text-align:right">₹${i.unit_price.toFixed(2)}</td><td style="text-align:right">₹${i.total.toFixed(2)}</td></tr>`).join('');
+  const win = window.open('', '_blank');
+  win.document.write(`<html><head><title>Invoice ${inv.invoice_no}</title>
+    <style>body{font-family:Arial,sans-serif;padding:30px;max-width:700px;margin:auto;font-size:13px}h2{margin:0}table{width:100%;border-collapse:collapse;margin:14px 0}th{background:#f5f5f5;padding:8px;text-align:left;border-bottom:2px solid #ddd;font-size:12px}td{padding:7px 8px;border-bottom:1px solid #eee}.header{display:flex;justify-content:space-between;margin-bottom:20px;padding-bottom:14px;border-bottom:2px solid #eee}.footer{margin-top:30px;padding-top:12px;border-top:1px solid #eee;font-size:11px;color:#888;text-align:center}@media print{button{display:none}}</style></head><body>
+    <div class="header"><div><h2>${h.name||'MediCore Hospital'}</h2><div style="color:#666;font-size:12px">${h.address||''}</div></div><div style="text-align:right"><div style="font-size:11px;color:#888">Invoice No.</div><div style="font-weight:700;font-family:monospace">${inv.invoice_no}</div><div style="font-size:11px;color:#888">${inv.date}</div></div></div>
+    <div style="margin-bottom:16px"><div style="font-weight:600">${inv.patient}</div><div style="font-size:12px;color:#666">UHID: ${inv.uhid}</div></div>
+    <table><thead><tr><th>Medicine</th><th style="text-align:center">Qty</th><th style="text-align:right">Price</th><th style="text-align:right">Total</th></tr></thead><tbody>${itemsHtml}</tbody></table>
+    <div style="display:flex;justify-content:flex-end"><div style="min-width:200px">
+      <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #eee"><span>Subtotal</span><span>₹${inv.subtotal.toFixed(2)}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #eee"><span>GST (${inv.gst_pct}%)</span><span>₹${inv.gst_amount.toFixed(2)}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;font-weight:700;font-size:15px"><span>Total</span><span>₹${inv.total.toFixed(2)}</span></div>
+    </div></div>
+    <div class="footer">MediCore HMS · Pharmacy Bill · Computer Generated</div>
+    <div style="text-align:center;margin-top:16px"><button onclick="window.print()" style="padding:8px 24px;background:#b45309;color:#fff;border:none;border-radius:6px;cursor:pointer">🖨 Print</button></div>
+    </body></html>`);
+  win.document.close();
 }
 
 async function loadDispensed() {

@@ -238,3 +238,139 @@ def _log_notification(channel, recipient, message,
         db.session.commit()
     except Exception as e:
         logger.error(f'Failed to log notification: {e}')
+
+
+# ── Medicine Reminder System ──────────────────────────────────
+
+FREQUENCY_SCHEDULE = {
+    'once daily':     ['08:00'],
+    'twice daily':    ['08:00','20:00'],
+    'three times':    ['08:00','14:00','20:00'],
+    'four times':     ['07:00','12:00','17:00','21:00'],
+    'every 6 hours':  ['06:00','12:00','18:00','00:00'],
+    'every 8 hours':  ['06:00','14:00','22:00'],
+    'every 12 hours': ['08:00','20:00'],
+    'morning':        ['08:00'],
+    'night':          ['21:00'],
+    'bedtime':        ['21:30'],
+    'with meals':     ['08:00','13:00','19:00'],
+    'before meals':   ['07:30','12:30','18:30'],
+    'after meals':    ['08:30','13:30','19:30'],
+}
+
+def check_medicine_reminders(app):
+    """Check active prescriptions and send reminders for medicines due now (±10 min window)."""
+    from datetime import datetime, timedelta
+    from app.models.pharmacy import Prescription, PrescriptionItem, Drug
+    from app.models.clinical import Notification
+    from app.models.patient import Patient
+    from app.models.user import User
+    import re as _re
+
+    now     = datetime.now()
+    now_str = now.strftime('%H:%M')
+    window  = 10  # ±10 minutes
+
+    def time_in_window(t_str):
+        try:
+            t = datetime.strptime(t_str, '%H:%M')
+            t = t.replace(year=now.year, month=now.month, day=now.day)
+            diff = abs((now - t).total_seconds())
+            return diff <= window * 60
+        except Exception:
+            return False
+
+    try:
+        # Active prescriptions (status = 'active')
+        rxs = Prescription.query.filter_by(status='active').all()
+        for rx in rxs:
+            items = PrescriptionItem.query.filter_by(prescription_id=rx.id).all()
+            for item in items:
+                drug = Drug.query.get(item.drug_id) if item.drug_id else None
+                drug_name = drug.name if drug else (item.drug_name or 'Medicine')
+                freq = (item.frequency or '').lower().strip()
+
+                # Find matching schedule times
+                times = FREQUENCY_SCHEDULE.get(freq, [])
+                if not times:
+                    # Try partial match
+                    for key, val in FREQUENCY_SCHEDULE.items():
+                        if key in freq or freq in key:
+                            times = val
+                            break
+
+                for t in times:
+                    if not time_in_window(t):
+                        continue
+                    # Get patient user
+                    patient = Patient.query.get(rx.patient_id)
+                    if not patient:
+                        continue
+                    user = User.query.filter_by(id=patient.user_id).first() if hasattr(patient, 'user_id') else None
+                    if not user:
+                        # Try via patient relationship
+                        from app.models.patient import Patient as P
+                        user = User.query.join(P, User.id == P.user_id).filter(P.id == rx.patient_id).first() if hasattr(P, 'user_id') else None
+                    if not user:
+                        continue
+
+                    # Avoid duplicate reminders (check last 15 min)
+                    recent_cutoff = datetime.utcnow() - timedelta(minutes=15)
+                    dup = Notification.query.filter(
+                        Notification.user_id == user.id,
+                        Notification.title.like(f'%{drug_name}%'),
+                        Notification.created_at >= recent_cutoff,
+                    ).first()
+                    if dup:
+                        continue
+
+                    instructions = item.instructions or 'Take as directed'
+                    dosage = item.dosage or ''
+                    notif = Notification(
+                        user_id    = user.id,
+                        title      = f'Medicine Reminder — {drug_name}',
+                        message    = f'Time to take {drug_name}{" "+dosage if dosage else ""}. {instructions}.',
+                        notif_type = 'info',
+                        module     = 'pharmacy',
+                    )
+                    db.session.add(notif)
+                    db.session.commit()
+
+                    # Real-time Socket.IO push
+                    try:
+                        from app import socketio
+                        socketio.emit('notification', {
+                            'id':         notif.id,
+                            'title':      notif.title,
+                            'message':    notif.message,
+                            'notif_type': 'reminder',
+                            'icon':       '💊',
+                        }, room=f'user_{user.id}')
+                        logger.info(f'Medicine reminder sent to user {user.id}: {drug_name} at {t}')
+                    except Exception as se:
+                        logger.warning(f'Socket emit failed: {se}')
+
+    except Exception as e:
+        logger.error(f'Medicine reminder check error: {e}')
+
+
+def schedule_medicine_reminders(app):
+    """APScheduler job — runs every 5 minutes to check medicine times."""
+    from apscheduler.schedulers.background import BackgroundScheduler
+    from apscheduler.triggers.interval import IntervalTrigger
+
+    scheduler = BackgroundScheduler()
+
+    def run_check():
+        with app.app_context():
+            check_medicine_reminders(app)
+
+    scheduler.add_job(
+        run_check,
+        trigger=IntervalTrigger(minutes=5),
+        id='medicine_reminders',
+        replace_existing=True,
+    )
+    scheduler.start()
+    logger.info('Medicine reminder scheduler started (every 5 minutes)')
+    return scheduler

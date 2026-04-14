@@ -45,7 +45,7 @@ input.error{border-color:var(--red)}
 
 /* OTP inputs */
 .otp-row{display:flex;gap:10px;justify-content:center;margin:10px 0}
-.otp-input{width:46px;height:52px;border:1.5px solid var(--border);border-radius:10px;font-size:22px;font-weight:700;text-align:center;color:var(--text);background:var(--white);outline:none;-webkit-appearance:none}
+.otp-input{width:46px;height:52px;border:1.5px solid var(--border);border-radius:10px;font-size:22px;font-weight:700;text-align:center;color:#1f2937 !important;background:#ffffff !important;outline:none;-webkit-appearance:none;-webkit-text-fill-color:#1f2937 !important}
 .otp-input:focus{border-color:var(--blue)}
 
 /* Buttons */
@@ -359,7 +359,7 @@ input.error{border-color:var(--red)}
 </div>
 
 <div class="footer">
-  &copy; 2024 MediCore HMS &bull; <a href="#">Privacy Policy</a> &bull; <a href="#">Help</a>
+  &copy; 2024 MediCore HMS &bull; <a href="#" onclick="document.getElementById('privacy-modal').style.display='flex'" style='cursor:pointer'>Privacy Policy</a> &bull; <a href="#" onclick="document.getElementById('help-modal').style.display='flex'" style='cursor:pointer'>Help</a>
 </div>
 
 <script>
@@ -599,5 +599,56 @@ async function resetPassword() {
   }
 }
 </script>
+
+<!-- Privacy Policy Modal -->
+<div id="privacy-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:16px;width:90%;max-width:400px;padding:24px;max-height:80vh;overflow-y:auto;margin:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-size:16px;font-weight:800;color:#1f2937">Privacy Policy</div>
+      <button onclick="document.getElementById('privacy-modal').style.display='none'"
+        style="background:none;border:none;cursor:pointer;font-size:22px;color:#6b7280;line-height:1">×</button>
+    </div>
+    <div style="font-size:13px;color:#6b7280;line-height:1.8">
+      <p><strong style="color:#1f2937">Data Collected:</strong> Name, age, contact details, health records, prescriptions, lab results, and appointment history.</p><br>
+      <p><strong style="color:#1f2937">Purpose:</strong> Managing your medical records, communicating with healthcare providers, processing payments, and sending reminders.</p><br>
+      <p><strong style="color:#1f2937">Security:</strong> All data is encrypted. Access is restricted to authorised hospital staff only.</p><br>
+      <p><strong style="color:#1f2937">Your Rights:</strong> You may request access, correction, or deletion of your data by contacting hospital administration.</p>
+    </div>
+    <button onclick="document.getElementById('privacy-modal').style.display='none'"
+      style="width:100%;margin-top:16px;padding:12px;background:#1a6fc4;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">Close</button>
+  </div>
+</div>
+
+<!-- Help Modal -->
+<div id="help-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:16px;width:90%;max-width:400px;padding:24px;max-height:80vh;overflow-y:auto;margin:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-size:16px;font-weight:800;color:#1f2937">Help & Support</div>
+      <button onclick="document.getElementById('help-modal').style.display='none'"
+        style="background:none;border:none;cursor:pointer;font-size:22px;color:#6b7280;line-height:1">×</button>
+    </div>
+    <div style="display:grid;gap:10px;font-size:13px">
+      <div style="background:#f0f4f8;border-radius:10px;padding:12px">
+        <div style="font-weight:700;color:#1f2937;margin-bottom:3px">How to Login</div>
+        <div style="color:#6b7280">Use the email or phone number registered at the hospital. For OTP login, check your registered email.</div>
+      </div>
+      <div style="background:#f0f4f8;border-radius:10px;padding:12px">
+        <div style="font-weight:700;color:#1f2937;margin-bottom:3px">Forgot Password?</div>
+        <div style="color:#6b7280">Tap "Forgot Password" on the login screen. A reset link will be sent to your registered email.</div>
+      </div>
+      <div style="background:#f0f4f8;border-radius:10px;padding:12px">
+        <div style="font-weight:700;color:#1f2937;margin-bottom:3px">New Patient Registration</div>
+        <div style="color:#6b7280">Tap "Create Account" and fill in your details. Visit the hospital reception for verification if required.</div>
+      </div>
+      <div style="background:#f0f4f8;border-radius:10px;padding:12px">
+        <div style="font-weight:700;color:#1f2937;margin-bottom:3px">Technical Support</div>
+        <div style="color:#6b7280">For login issues or technical problems, contact the hospital reception desk or call the helpdesk number on your appointment card.</div>
+      </div>
+    </div>
+    <button onclick="document.getElementById('help-modal').style.display='none'"
+      style="width:100%;margin-top:16px;padding:12px;background:#1a6fc4;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">Close</button>
+  </div>
+</div>
+
 </body>
 </html>

@@ -83,7 +83,7 @@ class User(UserMixin, db.Model):
 
 class AuditLog(db.Model):
     __tablename__ = 'audit_logs'
-    id          = db.Column(db.BigInteger, primary_key=True)
+    id          = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id     = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'))
     action      = db.Column(db.String(100), nullable=False)
     module      = db.Column(db.String(50))

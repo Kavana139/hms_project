@@ -8,8 +8,7 @@ def register_events(socketio):
 
     @socketio.on('request_ot_status')
     def on_ot_status():
-        from app.models.clinical import OTRoom, OTSchedule
-        # Simple placeholder — will be expanded in OT module
+        # OT module placeholder — expanded in future release
         emit('ot_status_update', {'rooms': []})
 
 

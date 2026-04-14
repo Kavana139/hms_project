@@ -181,6 +181,8 @@ select{padding:8px 12px;border:1px solid var(--border);border-radius:7px;
        font-size:13px;background:var(--white);color:var(--text);outline:none;cursor:pointer}
 
 /* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;
+  display:none;align-items:center;justify-content:center;padding:20px}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;
           display:none;align-items:center;justify-content:center;padding:20px}
 .modal-bg.open{display:flex}
@@ -491,18 +493,150 @@ select{padding:8px 12px;border:1px solid var(--border);border-radius:7px;
 
     <!-- ── BEDS PAGE ── -->
     <div class="page" id="page-beds">
-      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
-        <div class="kpi-card"><div class="kpi-top"><div class="kpi-icon" style="background:var(--teal-light)"><svg style="color:var(--teal)" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg></div><div class="kpi-label">Available</div></div><div class="kpi-value" id="bed-avail">—</div></div>
-        <div class="kpi-card"><div class="kpi-top"><div class="kpi-icon" style="background:var(--red-light)"><svg style="color:var(--red)" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg></div><div class="kpi-label">Occupied</div></div><div class="kpi-value" id="bed-occ">—</div></div>
-        <div class="kpi-card"><div class="kpi-top"><div class="kpi-icon" style="background:var(--amber-light)"><svg style="color:var(--amber)" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg></div><div class="kpi-label">Cleaning</div></div><div class="kpi-value" id="bed-clean">—</div></div>
-        <div class="kpi-card"><div class="kpi-top"><div class="kpi-icon" style="background:var(--blue-light)"><svg style="color:var(--blue)" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg></div><div class="kpi-label">Reserved</div></div><div class="kpi-value" id="bed-res">—</div></div>
+      <!-- KPI Row -->
+      <div class="kpi-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:18px">
+        <div class="kpi-card"><div class="kpi-top"><div class="kpi-icon" style="background:#e6f9f3"><svg style="color:#0f9e75" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><div class="kpi-label">Available</div></div><div class="kpi-value" id="bed-avail" style="color:#0f9e75">—</div></div>
+        <div class="kpi-card"><div class="kpi-top"><div class="kpi-icon" style="background:#fde8e8"><svg style="color:#e24b4a" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg></div><div class="kpi-label">Occupied</div></div><div class="kpi-value" id="bed-occ" style="color:#e24b4a">—</div></div>
+        <div class="kpi-card"><div class="kpi-top"><div class="kpi-icon" style="background:#fef3e2"><svg style="color:#f59e0b" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div class="kpi-label">Cleaning</div></div><div class="kpi-value" id="bed-clean" style="color:#f59e0b">—</div></div>
+        <div class="kpi-card"><div class="kpi-top"><div class="kpi-icon" style="background:#e8f1fb"><svg style="color:#1a6fc4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div class="kpi-label">Maintenance</div></div><div class="kpi-value" id="bed-maint" style="color:#1a6fc4">—</div></div>
+        <div class="kpi-card"><div class="kpi-top"><div class="kpi-icon" style="background:#f3e8ff"><svg style="color:#7c3aed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div><div class="kpi-label">Reserved</div></div><div class="kpi-value" id="bed-res" style="color:#7c3aed">—</div></div>
       </div>
-      <div class="table-card">
-        <div class="table-header"><div class="card-title">Bed Map</div></div>
-        <table>
-          <thead><tr><th>Bed No.</th><th>Ward</th><th>Type</th><th>Status</th></tr></thead>
-          <tbody id="beds-tbody"><tr><td colspan="4" class="loading">Loading...</td></tr></tbody>
-        </table>
+
+      <!-- Occupancy bar -->
+      <div class="table-card" style="padding:16px 20px;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-weight:600;font-size:14px">Overall Occupancy</span>
+          <span id="occ-pct-label" style="font-size:13px;color:var(--gray)">—%</span>
+        </div>
+        <div style="height:10px;background:#e5e7eb;border-radius:99px;overflow:hidden">
+          <div id="occ-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#0f9e75,#1a6fc4);border-radius:99px;transition:width .5s"></div>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:10px;font-size:12px;color:var(--gray)">
+          <span id="occ-total-wards">— Wards</span>
+          <span>•</span>
+          <span id="occ-total-beds">— Total Beds</span>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <button id="tab-wards" onclick="showBedTab('wards')" style="padding:5px 16px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;background:var(--blue);color:#fff;transition:all .15s">Wards</button>
+        <button id="tab-beds" onclick="showBedTab('beds')" style="padding:5px 16px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;background:none;color:var(--text-sm);transition:all .15s">All Beds</button>
+        <button id="tab-admissions" onclick="showBedTab('admissions')" style="padding:5px 16px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;background:none;color:var(--text-sm);transition:all .15s">Admissions</button>
+        <div style="flex:1"></div>
+        <button class="btn-sm btn-primary" onclick="openAddWardModal()">+ Add Ward</button>
+        <button class="btn-sm btn-outline" onclick="openAddBedModal()">+ Add Bed</button>
+        <button class="btn-sm btn-outline" onclick="openBulkBedModal()">Bulk Add Beds</button>
+      </div>
+
+      <!-- Wards tab -->
+      <div id="beds-tab-wards">
+        <div id="wards-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px"></div>
+      </div>
+
+      <!-- All Beds tab -->
+      <div id="beds-tab-beds" style="display:none">
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
+          <select id="bed-filter-ward" onchange="loadAllBeds()" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:6px;font-size:13px">
+            <option value="">All Wards</option>
+          </select>
+          <select id="bed-filter-status" onchange="loadAllBeds()" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:6px;font-size:13px">
+            <option value="">All Statuses</option>
+            <option value="available">Available</option>
+            <option value="occupied">Occupied</option>
+            <option value="cleaning">Cleaning</option>
+            <option value="maintenance">Maintenance</option>
+            <option value="reserved">Reserved</option>
+          </select>
+        </div>
+        <div class="table-card">
+          <table>
+            <thead><tr><th>Bed No.</th><th>Ward</th><th>Ward Type</th><th>Bed Type</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="all-beds-tbody"><tr><td colspan="5" class="loading">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Admissions tab -->
+      <div id="beds-tab-admissions" style="display:none">
+        <div class="table-card">
+          <table>
+            <thead><tr><th>Adm. No</th><th>Patient</th><th>Doctor</th><th>Ward / Bed</th><th>Admitted</th><th>Reason</th></tr></thead>
+            <tbody id="admissions-tbody"><tr><td colspan="6" class="loading">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Add Ward Modal -->
+      <div class="modal-overlay" id="modal-add-ward" style="display:none">
+        <div class="modal" style="max-width:460px">
+          <div class="modal-header"><h3 id="ward-modal-title">Add New Ward</h3><button onclick="closeModal('modal-add-ward')" class="modal-close">✕</button></div>
+          <div class="modal-body">
+            <input type="hidden" id="aw-ward-id"/>
+            <div class="form-group"><label>Ward Name *</label><input id="aw-name" placeholder="e.g. General Ward A"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="form-group"><label>Ward Type</label>
+                <select id="aw-type"><option value="general">General</option><option value="private">Private</option><option value="semi_private">Semi-Private</option><option value="icu">ICU</option><option value="nicu">NICU</option><option value="ot">OT</option><option value="emergency">Emergency</option></select>
+              </div>
+              <div class="form-group"><label>Floor</label><input id="aw-floor" placeholder="e.g. Ground, 2nd"></div>
+            </div>
+            <div class="form-group"><label>Charge Per Day (₹)</label><input id="aw-charge" type="number" min="0" placeholder="0"></div>
+            <div class="form-group"><label>Description</label><textarea id="aw-desc" rows="2" placeholder="Optional notes..."></textarea></div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-sm btn-outline" onclick="closeModal('modal-add-ward')">Cancel</button>
+            <button class="btn-sm btn-primary" id="ward-submit-btn" onclick="submitAddWard()">Create Ward</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Bed Modal -->
+      <div class="modal-overlay" id="modal-add-bed" style="display:none">
+        <div class="modal" style="max-width:420px">
+          <div class="modal-header"><h3 id="bed-modal-title">Add New Bed</h3><button onclick="closeModal('modal-add-bed')" class="modal-close">✕</button></div>
+          <div class="modal-body">
+            <input type="hidden" id="ab-bed-id"/>
+            <div class="form-group"><label>Ward *</label>
+              <select id="ab-ward"></select>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="form-group"><label>Bed Number *</label><input id="ab-number" placeholder="e.g. A01"></div>
+              <div class="form-group"><label>Bed Type</label>
+                <select id="ab-type"><option value="standard">Standard</option><option value="electric">Electric</option><option value="icu">ICU</option><option value="nicu">NICU</option></select>
+              </div>
+            </div>
+            <div class="form-group"><label>Features</label><input id="ab-features" placeholder="e.g. Oxygen, Call button"></div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-sm btn-outline" onclick="closeModal('modal-add-bed')">Cancel</button>
+            <button class="btn-sm btn-primary" id="bed-submit-btn" onclick="submitAddBed()">Add Bed</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bulk Bed Modal -->
+      <div class="modal-overlay" id="modal-bulk-bed" style="display:none">
+        <div class="modal" style="max-width:420px">
+          <div class="modal-header"><h3>Bulk Add Beds</h3><button onclick="closeModal('modal-bulk-bed')" class="modal-close">✕</button></div>
+          <div class="modal-body">
+            <div class="form-group"><label>Ward *</label><select id="bb-ward"></select></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+              <div class="form-group"><label>Prefix</label><input id="bb-prefix" placeholder="B" value="B" maxlength="4"></div>
+              <div class="form-group"><label>Start No.</label><input id="bb-start" type="number" value="1" min="1"></div>
+              <div class="form-group"><label>Count</label><input id="bb-count" type="number" value="10" min="1" max="50"></div>
+            </div>
+            <div class="form-group"><label>Bed Type</label>
+              <select id="bb-type"><option value="standard">Standard</option><option value="electric">Electric</option><option value="icu">ICU</option><option value="nicu">NICU</option></select>
+            </div>
+            <div style="background:#f0f4f8;border-radius:8px;padding:10px;font-size:13px;color:#6b7280">
+              Preview: Beds will be named <strong id="bb-preview">B01 – B10</strong>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-sm btn-outline" onclick="closeModal('modal-bulk-bed')">Cancel</button>
+            <button class="btn-sm btn-primary" onclick="submitBulkBeds()">Create Beds</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1010,17 +1144,382 @@ async function loadDepts() {
     </tr>`).join('') || '<tr><td colspan="3" class="empty">No departments</td></tr>';
 }
 
-// ── Beds ──────────────────────────────────────────────────────
+// ── Bed Management ──────────────────────────────────────────────
+let currentBedTab = 'wards';
+
 async function loadBeds() {
-  const rs = await fetch('/admin/api/stats');
-  const ds = await rs.json();
-  if (ds.success) {
-    document.getElementById('bed-avail').textContent = ds.stats.beds_available;
-    document.getElementById('bed-occ').textContent   = ds.stats.beds_occupied;
-    document.getElementById('bed-clean').textContent = '—';
-    document.getElementById('bed-res').textContent   = '—';
-  }
-  document.getElementById('beds-tbody').innerHTML = '<tr><td colspan="4" class="empty">Bed details coming in Phase 5 (Ward Management)</td></tr>';
+  await loadBedStats();
+  if      (currentBedTab === 'wards')      await loadWards();
+  else if (currentBedTab === 'beds')       await loadAllBeds();
+  else if (currentBedTab === 'admissions') await loadAdmissions();
+}
+
+function showBedTab(tab) {
+  currentBedTab = tab;
+  ['wards','beds','admissions'].forEach(t => {
+    const el = document.getElementById('beds-tab-' + t);
+    if (el) el.style.display = t === tab ? '' : 'none';
+    const btn = document.getElementById('tab-' + t);
+    if (btn) {
+      btn.style.background = t === tab ? 'var(--blue)' : 'none';
+      btn.style.color      = t === tab ? '#fff' : 'var(--text-sm)';
+    }
+  });
+  if      (tab === 'wards')      loadWards();
+  else if (tab === 'beds')       { populateWardFilter(); loadAllBeds(); }
+  else                           loadAdmissions();
+}
+
+async function loadBedStats() {
+  try {
+    const r = await fetch('/admin/api/bed-stats');
+    const d = await r.json();
+    if (!d.success) return;
+    const s = d.stats;
+    document.getElementById('bed-avail').textContent  = s.available;
+    document.getElementById('bed-occ').textContent    = s.occupied;
+    document.getElementById('bed-clean').textContent  = s.cleaning;
+    document.getElementById('bed-maint').textContent  = s.maintenance;
+    document.getElementById('bed-res').textContent    = s.reserved;
+    const pct = s.occupancy_pct;
+    document.getElementById('occ-pct-label').textContent = pct + '%';
+    const bar = document.getElementById('occ-bar');
+    bar.style.width      = Math.min(pct, 100) + '%';
+    bar.style.background = pct >= 90 ? '#dc2626' : pct >= 70 ? '#f59e0b' : 'linear-gradient(90deg,#0f9e75,#1a6fc4)';
+    document.getElementById('occ-total-wards').textContent = s.total_wards + ' Ward' + (s.total_wards !== 1 ? 's' : '');
+    document.getElementById('occ-total-beds').textContent  = s.total + ' Total Bed' + (s.total !== 1 ? 's' : '');
+  } catch(e) {}
+}
+
+async function loadWards() {
+  const grid = document.getElementById('wards-grid');
+  grid.innerHTML = '<div style="color:var(--text-xs);font-size:13px;padding:20px">Loading wards…</div>';
+  try {
+    const r = await fetch('/admin/api/wards');
+    const d = await r.json();
+    if (!d.success || !d.wards.length) {
+      grid.innerHTML = '<div style="padding:32px;text-align:center;color:var(--text-xs)"><div style="font-size:14px;font-weight:600;margin-bottom:6px">No wards configured</div><div style="font-size:12px">Click "+ Ward" to create the first ward</div></div>';
+      return;
+    }
+    const typeLabel = {general:'General',private:'Private',semi_private:'Semi-Private',icu:'ICU',nicu:'NICU',ot:'OT',emergency:'Emergency'};
+    const typeColor = {general:'#1a6fc4',private:'#7c3aed',semi_private:'#0f9e75',icu:'#dc2626',nicu:'#d97706',ot:'#475569',emergency:'#b91c1c'};
+    grid.innerHTML = d.wards.map(w => {
+      const pct = w.total ? Math.round(w.occupied / w.total * 100) : 0;
+      const col = typeColor[w.ward_type] || '#1a6fc4';
+      const lab = typeLabel[w.ward_type] || w.ward_type;
+      const barCol = pct >= 90 ? '#dc2626' : pct >= 70 ? '#f59e0b' : '#0f9e75';
+      const safeName = (w.name||'').replace(/'/g,"\'").replace(/"/g,'&quot;');
+      return `
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px;transition:box-shadow .2s"
+           onmouseenter="this.style.boxShadow='0 4px 16px rgba(0,0,0,.08)'" onmouseleave="this.style.boxShadow='none'">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${w.name}</div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span style="font-size:11px;font-weight:600;color:${col};background:${col}18;padding:2px 10px;border-radius:4px;text-transform:uppercase;letter-spacing:.3px">${lab}</span>
+              ${w.floor ? `<span style="font-size:11px;color:var(--text-xs)">Floor: ${w.floor}</span>` : ''}
+            </div>
+          </div>
+          <div style="display:flex;gap:4px;margin-left:8px;flex-shrink:0">
+            <button onclick="openEditWard(${w.id},'${safeName}','${w.ward_type}','${w.floor||''}',${w.charge_per_day||0},'${(w.description||'').replace(/'/g,"\'")}')"
+              style="width:30px;height:30px;border:1px solid var(--border);border-radius:6px;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-sm);transition:all .15s"
+              onmouseenter="this.style.background='var(--blue-light)';this.style.color='var(--blue)'"
+              onmouseleave="this.style.background='none';this.style.color='var(--text-sm)'"
+              title="Edit Ward">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button onclick="deleteWard(${w.id},'${safeName}')"
+              style="width:30px;height:30px;border:1px solid var(--border);border-radius:6px;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-sm);transition:all .15s"
+              onmouseenter="this.style.background='var(--red-light)';this.style.color='var(--red)';this.style.borderColor='var(--red)'"
+              onmouseleave="this.style.background='none';this.style.color='var(--text-sm)';this.style.borderColor='var(--border)'"
+              title="Delete Ward">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+            </button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px">
+          <div style="text-align:center"><div style="font-size:20px;font-weight:800;color:#0f9e75">${w.available}</div><div style="font-size:10px;color:var(--text-xs);font-weight:600;text-transform:uppercase">Free</div></div>
+          <div style="text-align:center"><div style="font-size:20px;font-weight:800;color:#e24b4a">${w.occupied}</div><div style="font-size:10px;color:var(--text-xs);font-weight:600;text-transform:uppercase">Occupied</div></div>
+          <div style="text-align:center"><div style="font-size:20px;font-weight:800;color:#b45309">${w.cleaning+w.maintenance}</div><div style="font-size:10px;color:var(--text-xs);font-weight:600;text-transform:uppercase">Offline</div></div>
+          <div style="text-align:center"><div style="font-size:20px;font-weight:800;color:var(--text)">${w.total}</div><div style="font-size:10px;color:var(--text-xs);font-weight:600;text-transform:uppercase">Total</div></div>
+        </div>
+        <div>
+          <div style="height:6px;background:var(--border);border-radius:99px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${barCol};border-radius:99px;transition:width .5s"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:11px;color:var(--text-xs)">
+            <span>${pct}% occupancy</span>
+            <span>₹${parseFloat(w.charge_per_day).toLocaleString('en-IN')}/day</span>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) { grid.innerHTML = '<div style="color:var(--red);padding:16px;font-size:13px">Failed to load wards</div>'; }
+}
+
+const statusBadge = s => {
+  const map = {available:['#0f9e75','#e1f5ee'],occupied:['#dc2626','#fef2f2'],cleaning:['#b45309','#fef3e2'],maintenance:['#1a6fc4','#e8f1fb'],reserved:['#7c3aed','#f3e8ff']};
+  const [col,bg] = map[s] || ['#6b7280','#f1f5f9'];
+  return `<span style="background:${bg};color:${col};padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;text-transform:capitalize">${s}</span>`;
+};
+
+async function loadAllBeds() {
+  const tbody = document.getElementById('all-beds-tbody');
+  tbody.innerHTML = '<tr><td colspan="6" class="loading">Loading beds…</td></tr>';
+  const ward = document.getElementById('bed-filter-ward')?.value || '';
+  const status = document.getElementById('bed-filter-status')?.value || '';
+  let url = '/admin/api/beds?';
+  if (ward) url += 'ward_id=' + ward + '&';
+  if (status) url += 'status=' + status;
+  try {
+    const r = await fetch(url);
+    const d = await r.json();
+    if (!d.success || !d.beds.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">No beds found</td></tr>'; return; }
+    tbody.innerHTML = d.beds.map(b => `
+      <tr>
+        <td><strong>${b.bed_number}</strong></td>
+        <td>${b.ward_name}</td>
+        <td style="text-transform:capitalize;color:var(--text-sm)">${(b.ward_type||'').replace('_',' ')}</td>
+        <td style="text-transform:capitalize;color:var(--text-sm)">${b.bed_type}</td>
+        <td>${statusBadge(b.status)}</td>
+        <td style="display:flex;gap:6px;align-items:center">
+          <select onchange="changeBedStatus(${b.id},this.value,this)"
+            style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text);background:var(--white)">
+            ${['available','occupied','cleaning','maintenance','reserved'].map(s =>
+              `<option value="${s}" ${b.status===s?'selected':''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`
+            ).join('')}
+          </select>
+          <button onclick="openEditBed(${b.id},'${(b.bed_number||'').replace(/'/g,"\'")}','${b.bed_type}','${(b.features||'').replace(/'/g,"\'")}')"
+            style="width:26px;height:26px;border:1px solid var(--border);border-radius:5px;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-sm)"
+            title="Edit Bed">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button onclick="deleteBed(${b.id},'${(b.bed_number||'').replace(/'/g,"\'")}')"
+            style="width:26px;height:26px;border:1px solid var(--border);border-radius:5px;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--red)"
+            title="Delete Bed">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          </button>
+        </td>
+      </tr>`).join('');
+  } catch(e) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Error loading beds</td></tr>'; }
+}
+
+async function loadAdmissions() {
+  const tbody = document.getElementById('admissions-tbody');
+  tbody.innerHTML = '<tr><td colspan="6" class="loading">Loading admissions…</td></tr>';
+  try {
+    const r = await fetch('/admin/api/admissions?status=admitted');
+    const d = await r.json();
+    if (!d.success || !d.admissions.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">No active admissions</td></tr>'; return; }
+    tbody.innerHTML = d.admissions.map(a => `
+      <tr>
+        <td><strong style="font-family:monospace">${a.admission_no}</strong></td>
+        <td><div style="font-weight:600">${a.patient}</div><div style="font-size:11px;color:var(--text-xs)">${a.uhid}</div></td>
+        <td>${a.doctor}</td>
+        <td><div style="font-weight:600">${a.ward}</div><div style="font-size:11px;color:var(--text-xs)">Bed ${a.bed}</div></td>
+        <td style="white-space:nowrap">${a.admission_date}</td>
+        <td style="max-width:150px;color:var(--text-sm)">${a.reason||'—'}</td>
+      </tr>`).join('');
+  } catch(e) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Error loading</td></tr>'; }
+}
+
+async function changeBedStatus(bedId, status, sel) {
+  sel.disabled = true;
+  try {
+    const r = await fetch(`/admin/api/beds/${bedId}/status`, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({status})
+    });
+    const d = await r.json();
+    showToast(d.message, d.success ? 'success' : 'error');
+    if (d.success) loadBedStats();
+    else { loadAllBeds(); }
+  } catch(e) { showToast('Failed to update', 'error'); }
+  sel.disabled = false;
+}
+
+async function populateWardFilter() {
+  const sel = document.getElementById('bed-filter-ward');
+  if (!sel || sel.options.length > 1) return;
+  try {
+    const r = await fetch('/admin/api/wards');
+    const d = await r.json();
+    if (d.success) d.wards.forEach(w => {
+      const o = document.createElement('option'); o.value = w.id; o.textContent = w.name; sel.appendChild(o);
+    });
+  } catch(e) {}
+}
+
+// ── WARD CRUD ─────────────────────────────────────────────────
+function openAddWardModal() {
+  ['aw-name','aw-floor','aw-charge','aw-desc'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('aw-type').value = 'general';
+  document.getElementById('aw-ward-id').value = '';
+  const t = document.getElementById('ward-modal-title'); if(t) t.textContent='Add New Ward';
+  const b = document.getElementById('ward-submit-btn'); if(b) { b.textContent='Create Ward'; b.onclick=submitAddWard; }
+  document.getElementById('modal-add-ward').style.display = 'flex';
+}
+
+function openEditWard(id, name, type, floor, charge, desc) {
+  document.getElementById('aw-ward-id').value = id;
+  document.getElementById('aw-name').value    = name;
+  document.getElementById('aw-type').value    = type;
+  document.getElementById('aw-floor').value   = floor || '';
+  document.getElementById('aw-charge').value  = charge || 0;
+  document.getElementById('aw-desc').value    = desc || '';
+  const t = document.getElementById('ward-modal-title'); if(t) t.textContent='Edit Ward';
+  const b = document.getElementById('ward-submit-btn'); if(b) { b.textContent='Save Changes'; b.onclick=submitEditWard; }
+  document.getElementById('modal-add-ward').style.display = 'flex';
+}
+
+async function submitAddWard() {
+  const name = document.getElementById('aw-name').value.trim();
+  if (!name) { showToast('Ward name is required', 'error'); return; }
+  const btn = document.getElementById('ward-submit-btn'); btn.disabled=true; btn.textContent='Creating…';
+  try {
+    const r = await fetch('/admin/api/wards/create', {method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name, ward_type:document.getElementById('aw-type').value,
+        floor:document.getElementById('aw-floor').value,
+        charge_per_day:document.getElementById('aw-charge').value||0,
+        description:document.getElementById('aw-desc').value})});
+    const d = await r.json();
+    showToast(d.message, d.success?'success':'error');
+    if(d.success){closeModal('modal-add-ward');loadBeds();}
+  } catch(e){showToast('Failed','error');}
+  btn.disabled=false; btn.textContent='Create Ward';
+}
+
+async function submitEditWard() {
+  const id   = document.getElementById('aw-ward-id').value;
+  const name = document.getElementById('aw-name').value.trim();
+  if (!name) { showToast('Ward name required','error'); return; }
+  const btn = document.getElementById('ward-submit-btn'); btn.disabled=true; btn.textContent='Saving…';
+  try {
+    const r = await fetch('/admin/api/wards/'+id, {method:'PUT',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name, ward_type:document.getElementById('aw-type').value,
+        floor:document.getElementById('aw-floor').value,
+        charge_per_day:document.getElementById('aw-charge').value,
+        description:document.getElementById('aw-desc').value})});
+    const d = await r.json();
+    showToast(d.message, d.success?'success':'error');
+    if(d.success){closeModal('modal-add-ward');loadBeds();}
+  } catch(e){showToast('Failed','error');}
+  btn.disabled=false; btn.textContent='Save Changes';
+}
+
+async function deleteWard(id, name) {
+  if(!confirm(`Delete ward "${name}"?\nAll beds in this ward must be unoccupied.`)) return;
+  try {
+    const r = await fetch('/admin/api/wards/'+id+'/deactivate',{method:'POST'});
+    const d = await r.json();
+    showToast(d.message, d.success?'success':'error');
+    if(d.success) loadBeds();
+  } catch(e){showToast('Failed','error');}
+}
+
+// ── BED CRUD ──────────────────────────────────────────────────
+async function openAddBedModal() {
+  const sel = document.getElementById('ab-ward');
+  sel.innerHTML = '<option value="">Select ward…</option>';
+  try {
+    const r = await fetch('/admin/api/wards'); const d = await r.json();
+    if(d.success) d.wards.forEach(w=>{const o=document.createElement('option');o.value=w.id;o.textContent=w.name;sel.appendChild(o);});
+  } catch(e){}
+  document.getElementById('ab-bed-id').value = '';
+  document.getElementById('ab-number').value  = '';
+  document.getElementById('ab-features').value= '';
+  document.getElementById('ab-type').value    = 'standard';
+  const t=document.getElementById('bed-modal-title'); if(t) t.textContent='Add New Bed';
+  const b=document.getElementById('bed-submit-btn'); if(b){b.textContent='Add Bed';b.onclick=submitAddBed;}
+  document.getElementById('modal-add-bed').style.display='flex';
+}
+
+async function openEditBed(id, number, type, features) {
+  await openAddBedModal();
+  document.getElementById('ab-bed-id').value  = id;
+  document.getElementById('ab-number').value  = number;
+  document.getElementById('ab-type').value    = type;
+  document.getElementById('ab-features').value= features;
+  const t=document.getElementById('bed-modal-title'); if(t) t.textContent='Edit Bed';
+  const b=document.getElementById('bed-submit-btn'); if(b){b.textContent='Save Changes';b.onclick=submitEditBed;}
+}
+
+async function submitAddBed() {
+  const wardId=document.getElementById('ab-ward').value;
+  const num=document.getElementById('ab-number').value.trim();
+  if(!wardId||!num){showToast('Ward and bed number required','error');return;}
+  const btn=document.getElementById('bed-submit-btn');btn.disabled=true;btn.textContent='Adding…';
+  try {
+    const r=await fetch('/admin/api/beds/create',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ward_id:wardId,bed_number:num,bed_type:document.getElementById('ab-type').value,features:document.getElementById('ab-features').value})});
+    const d=await r.json();
+    showToast(d.message,d.success?'success':'error');
+    if(d.success){closeModal('modal-add-bed');loadBeds();}
+  } catch(e){showToast('Failed','error');}
+  btn.disabled=false; btn.textContent='Add Bed';
+}
+
+async function submitEditBed() {
+  const id=document.getElementById('ab-bed-id').value;
+  if(!id){submitAddBed();return;}
+  const btn=document.getElementById('bed-submit-btn');btn.disabled=true;btn.textContent='Saving…';
+  try {
+    const r=await fetch('/admin/api/beds/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({bed_number:document.getElementById('ab-number').value,bed_type:document.getElementById('ab-type').value,features:document.getElementById('ab-features').value})});
+    const d=await r.json();
+    showToast(d.message,d.success?'success':'error');
+    if(d.success){closeModal('modal-add-bed');loadAllBeds();}
+  } catch(e){showToast('Failed','error');}
+  btn.disabled=false;btn.textContent='Save Changes';
+}
+
+async function deleteBed(id, number) {
+  if(!confirm(`Delete bed ${number}? This cannot be undone.`)) return;
+  try {
+    const r=await fetch('/admin/api/beds/'+id+'/deactivate',{method:'POST'});
+    const d=await r.json();
+    showToast(d.message,d.success?'success':'error');
+    if(d.success){loadAllBeds();loadBedStats();}
+  } catch(e){showToast('Failed','error');}
+}
+
+// ── BULK BEDS ─────────────────────────────────────────────────
+async function openBulkBedModal() {
+  const sel=document.getElementById('bb-ward');
+  sel.innerHTML='<option value="">Select ward…</option>';
+  try {
+    const r=await fetch('/admin/api/wards');const d=await r.json();
+    if(d.success) d.wards.forEach(w=>{const o=document.createElement('option');o.value=w.id;o.textContent=w.name;sel.appendChild(o);});
+  } catch(e){}
+  updateBulkPreview();
+  document.getElementById('modal-bulk-bed').style.display='flex';
+}
+
+function updateBulkPreview() {
+  const prefix=document.getElementById('bb-prefix')?.value||'B';
+  const start=parseInt(document.getElementById('bb-start')?.value)||1;
+  const count=parseInt(document.getElementById('bb-count')?.value)||10;
+  const fmt=n=>String(n).padStart(2,'0');
+  const el=document.getElementById('bb-preview');
+  if(el) el.textContent=`${prefix}${fmt(start)} – ${prefix}${fmt(start+count-1)} (${count} beds)`;
+}
+
+document.addEventListener('input',e=>{
+  if(['bb-prefix','bb-start','bb-count'].includes(e.target.id)) updateBulkPreview();
+});
+
+async function submitBulkBeds() {
+  const wardId=document.getElementById('bb-ward').value;
+  if(!wardId){showToast('Please select a ward','error');return;}
+  const count=parseInt(document.getElementById('bb-count').value)||0;
+  if(count<1||count>50){showToast('Count must be 1–50','error');return;}
+  try {
+    const r=await fetch('/admin/api/beds/bulk-create',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ward_id:wardId,prefix:document.getElementById('bb-prefix').value||'B',
+        start:document.getElementById('bb-start').value||1,count,bed_type:document.getElementById('bb-type').value})});
+    const d=await r.json();
+    showToast(d.message,d.success?'success':'error');
+    if(d.success){closeModal('modal-bulk-bed');loadBeds();}
+  } catch(e){showToast('Failed','error');}
 }
 
 // ── Audit ─────────────────────────────────────────────────────
@@ -1089,7 +1588,12 @@ function toggleTheme() {
 }
 
 // ── Modals ────────────────────────────────────────────────────
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function closeModal(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('open');
+  el.style.display = 'none';
+}
 
 // ── Utility ───────────────────────────────────────────────────
 function debounce(fn, delay) {

@@ -14,6 +14,49 @@ from app.models.user import User, AuditLog, Role
 from app.models.patient import Patient
 
 
+
+# ── Email OTP Store (in-memory, cleared on restart) ──────────
+import secrets as _secrets
+from datetime import datetime as _dt, timedelta as _td
+
+_email_otp_store: dict = {}   # {email: {otp, expires, user_id}}
+
+def send_email_otp(user):
+    """Generate and email a 6-digit OTP to the user. Returns True on success."""
+    otp     = str(_secrets.randbelow(900000) + 100000)
+    expires = _dt.utcnow() + _td(minutes=10)
+    _email_otp_store[user.email] = {'otp': otp, 'expires': expires, 'user_id': user.id}
+    try:
+        from app.services.notification_service import send_email
+        body = (
+            f"Dear {user.full_name},\n\n"
+            f"Your MediCore HMS verification code is:\n\n"
+            f"    {otp}\n\n"
+            f"This code is valid for 10 minutes. Do not share it with anyone.\n\n"
+            f"If you did not request this, please contact your administrator immediately.\n\n"
+            f"MediCore HMS Security Team"
+        )
+        return send_email(to=user.email, subject='MediCore HMS — Login Verification Code', body=body)
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f'OTP email failed: {e}')
+        return False
+
+
+def verify_email_otp(email, otp):
+    """Verify OTP. Returns True if valid, False otherwise. Clears on success."""
+    record = _email_otp_store.get(email)
+    if not record:
+        return False, 'No OTP found. Please request a new one.'
+    if _dt.utcnow() > record['expires']:
+        _email_otp_store.pop(email, None)
+        return False, 'OTP expired. Please request a new one.'
+    if record['otp'] != str(otp).strip():
+        return False, 'Invalid OTP. Please try again.'
+    _email_otp_store.pop(email, None)
+    return True, 'OK'
+
+
 def generate_uhid():
     """Generate unique UHID like MED-20240001"""
     from app.models.user import HospitalSetting

@@ -391,6 +391,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 
     <!-- ── PRESCRIPTION PAGE ── -->
     <div class="page" id="page-prescription">
+      <div id="rx-patient-banner" style="background:var(--teal-light);border:1px solid var(--teal);border-radius:8px;padding:10px 16px;margin-bottom:14px;font-size:13px;color:var(--teal);font-weight:500;display:none">
+        👤 Prescribing for: <span id="rx-patient-name"></span> &nbsp;·&nbsp; <span id="rx-patient-uhid"></span>
+      </div>
+      <div id="rx-no-patient" style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:#b91c1c;display:none">
+        ⚠ No patient selected. Please go to <strong>OPD Queue</strong> and select a patient first.
+      </div>
       <div class="two-col" style="align-items:start">
         <div>
           <div class="card" style="margin-bottom:14px">
@@ -447,6 +453,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 
     <!-- ── LAB REQUESTS PAGE ── -->
     <div class="page" id="page-lab">
+      <div id="lab-patient-banner" style="background:var(--teal-light);border:1px solid var(--teal);border-radius:8px;padding:10px 16px;margin-bottom:14px;font-size:13px;color:var(--teal);font-weight:500;display:none">
+        👤 Lab request for: <span id="lab-patient-name"></span> &nbsp;·&nbsp; <span id="lab-patient-uhid"></span>
+      </div>
+      <div id="lab-no-patient" style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:#b91c1c;display:none">
+        ⚠ No patient selected. Please go to <strong>OPD Queue</strong> and select a patient first.
+      </div>
       <div class="two-col" style="align-items:start">
         <div class="card">
           <div class="card-hdr"><div class="card-title">Request Lab Tests</div></div>
@@ -519,6 +531,25 @@ document.addEventListener('DOMContentLoaded', () => {
   if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
 });
 
+function updatePatientBanners() {
+  // Prescription page banners
+  const rxBanner   = document.getElementById('rx-patient-banner');
+  const rxNone     = document.getElementById('rx-no-patient');
+  const labBanner  = document.getElementById('lab-patient-banner');
+  const labNone    = document.getElementById('lab-no-patient');
+  if (selectedPatient && selectedPatient.name) {
+    if (rxBanner)  { rxBanner.style.display  = 'block'; document.getElementById('rx-patient-name').textContent  = selectedPatient.name; document.getElementById('rx-patient-uhid').textContent  = selectedPatient.uhid || ''; }
+    if (rxNone)    rxNone.style.display   = 'none';
+    if (labBanner) { labBanner.style.display = 'block'; document.getElementById('lab-patient-name').textContent = selectedPatient.name; document.getElementById('lab-patient-uhid').textContent = selectedPatient.uhid || ''; }
+    if (labNone)   labNone.style.display  = 'none';
+  } else {
+    if (rxBanner)  rxBanner.style.display  = 'none';
+    if (rxNone)    rxNone.style.display    = 'block';
+    if (labBanner) labBanner.style.display = 'none';
+    if (labNone)   labNone.style.display   = 'block';
+  }
+}
+
 function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -528,6 +559,7 @@ function showPage(name) {
                    lab:'Lab Requests', upcoming:'Upcoming Appointments', schedule:'My Schedule' };
   document.getElementById('page-title').textContent = titles[name] || name;
   if (name === 'upcoming') loadUpcoming();
+  updatePatientBanners();
   if (name === 'schedule') loadSchedule();
 }
 
@@ -575,7 +607,7 @@ async function loadQueue() {
 
 async function selectPatient(appt) {
   selectedAppt    = appt;
-  selectedPatient = { id: appt.patient_id };
+  selectedPatient = { id: appt.patient_id, name: appt.patient_name, uhid: appt.uhid || '' };
   // Mark as in_progress
   if (appt.status === 'checked_in' || appt.status === 'confirmed' || appt.status === 'scheduled') {
     await fetch(`/doctor/api/appointments/${appt.id}/status`, {
@@ -600,6 +632,8 @@ function showPageDirect(name) {
 }
 
 function renderPatientInfo(p, appt) {
+  // Update selectedPatient with full details including uhid
+  if (selectedPatient) { selectedPatient.uhid = p.uhid; selectedPatient.name = p.full_name || selectedPatient.name; }
   document.getElementById('selected-patient-badge').textContent = `${p.uhid} · Token ${appt.token}`;
   const allergyHTML = p.allergies.length
     ? p.allergies.map(a => `<span class="badge badge-red" style="margin-right:4px">${a.allergen} (${a.severity})</span>`).join('')

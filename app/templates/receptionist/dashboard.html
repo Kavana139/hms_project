@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -520,6 +522,41 @@ tr:hover td{background:var(--bg)}
   </div>
 </div>
 
+<!-- BED DETAILS MODAL -->
+<div class="modal-bg" id="modal-bed-detail">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-hdr">
+      <div class="modal-title">Bed Details</div>
+      <button class="modal-close" onclick="closeModal('modal-bed-detail')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Bed Number</label>
+        <div class="fw" id="bed-detail-number"></div>
+      </div>
+      <div class="form-group">
+        <label>Ward</label>
+        <div class="fw" id="bed-detail-ward"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Status</label>
+          <div class="fw" id="bed-detail-status"></div>
+        </div>
+        <div class="form-group">
+          <label>Type</label>
+          <div class="fw" id="bed-detail-type"></div>
+        </div>
+      </div>
+      <div id="bed-detail-note" style="font-size:12px;color:var(--text-xs);line-height:1.5"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('modal-bed-detail')">Close</button>
+      <button class="btn btn-teal" id="bed-detail-action" onclick="selectBedForAdmission()">Select for Admission</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ── State ─────────────────────────────────────────────────────
 let billItems  = [];
@@ -528,6 +565,7 @@ let allDoctors  = [];
 let selectedBookPatient = null;
 let selectedAdmitPatient = null;
 let selectedBillPatient  = null;
+let selectedBed = null;
 
 // ── Init ──────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -554,6 +592,34 @@ function showPage(name) {
   document.getElementById('page-title').textContent = titles[name] || name;
   if (name === 'appointments') loadFullAppts();
   if (name === 'beds') loadBeds();
+}
+
+function openBedDetail(id, bedNumber, status, wardName, wardId, bedType) {
+  selectedBed = { id, wardId, status, bedNumber };
+  document.getElementById('bed-detail-number').textContent = bedNumber;
+  document.getElementById('bed-detail-ward').textContent = wardName;
+  document.getElementById('bed-detail-status').textContent = status.replace('_', ' ');
+  document.getElementById('bed-detail-type').textContent = bedType || '—';
+  const note = document.getElementById('bed-detail-note');
+  const action = document.getElementById('bed-detail-action');
+  if (status === 'available') {
+    note.textContent = 'This bed is available. Use it to move directly into the admit flow.';
+    action.style.display = 'inline-flex';
+    action.disabled = false;
+  } else {
+    note.textContent = 'This bed is currently not available for admission, but the details are still visible.';
+    action.style.display = 'none';
+  }
+  document.getElementById('modal-bed-detail').classList.add('open');
+}
+
+async function selectBedForAdmission() {
+  if (!selectedBed || selectedBed.status !== 'available') return;
+  closeModal('modal-bed-detail');
+  showPage2('admit');
+  document.getElementById('admit-ward').value = String(selectedBed.wardId);
+  await loadWardBeds();
+  document.getElementById('admit-bed').value = String(selectedBed.id);
 }
 
 // ── Stats ─────────────────────────────────────────────────────
@@ -636,11 +702,22 @@ function makeSearchFn(inputId, dropdownId, onSelect) {
       const r = await fetch(`/receptionist/api/patients/search?q=${encodeURIComponent(q)}`);
       const d = await r.json();
       if (!d.patients.length) { dd.classList.remove('open'); return; }
-      dd.innerHTML = d.patients.map(p => `
-        <div class="search-opt" onclick='(${onSelect.toString()})(${JSON.stringify(p)})'>
+      dd.innerHTML = d.patients.map((p, i) => `
+        <div class="search-opt" data-idx="${i}" data-dd="${dropdownId}">
           <div><div>${p.full_name}</div><div class="search-opt-sub">${p.uhid} · ${p.phone||''}</div></div>
           <span class="badge badge-${p.gender==='male'?'blue':'purple'}">${(p.gender||'?').charAt(0).toUpperCase()}</span>
         </div>`).join('');
+      // Store patients on the dropdown element and attach listeners
+      dd._patients = d.patients;
+      dd._onSelect = onSelect;
+      dd.querySelectorAll('.search-opt').forEach(el => {
+        el.addEventListener('mousedown', function(e) {
+          e.preventDefault();
+          const idx = parseInt(this.getAttribute('data-idx'));
+          const patient = dd._patients[idx];
+          dd._onSelect(patient);
+        });
+      });
       dd.classList.add('open');
     }, 300);
   };
@@ -951,7 +1028,7 @@ async function loadBeds() {
     const br = await fetch(`/receptionist/api/beds?ward_id=${ward.id}`);
     const bd = await br.json();
     const bedHTML = (bd.beds || []).map(b => `
-      <div class="bed-card ${b.status}">
+      <div class="bed-card ${b.status}" onclick='openBedDetail(${b.id}, ${JSON.stringify(b.bed_number)}, ${JSON.stringify(b.status)}, ${JSON.stringify(ward.name)}, ${ward.id}, ${JSON.stringify(b.bed_type || "")})'>
         <div class="bed-no">${b.bed_number}</div>
         <div>${b.status}</div>
       </div>`).join('');
@@ -1058,9 +1135,78 @@ async function generateBill() {
         <div class="title">✓ Invoice Created!</div>
         <div class="info-row"><span class="info-label">Invoice No.</span><span style="font-weight:600;font-family:monospace">${d.invoice_no}</span></div>
         <div class="info-row"><span class="info-label">Total Amount</span><span style="font-weight:700;font-size:16px;color:var(--teal)">₹${d.total.toFixed(2)}</span></div>
+        <div style="margin-top:14px;display:flex;gap:8px">
+          <button class="btn btn-primary" style="flex:1" onclick="printInvoice(${d.invoice_id})">🖨 Print Invoice</button>
+          <button class="btn btn-outline" style="flex:1" onclick="downloadInvoicePDF(${d.invoice_id})">⬇ Download PDF</button>
+        </div>
       </div>`;
     billItems = []; renderBillItems();
   } else { showAlert2(document.getElementById('bill-alert'), d.message||'Failed','error'); }
+}
+
+// ── Invoice Print / PDF ──────────────────────────────────────
+async function printInvoice(invId) {
+  const r = await fetch(`/billing/api/invoices/${invId}`);
+  const d = await r.json();
+  if (!d.success) { alert('Could not load invoice'); return; }
+  const inv = d.invoice;
+  const h = d.hospital;
+  const itemsHtml = inv.items.map(i => `
+    <tr>
+      <td>${i.description}</td>
+      <td style="text-align:center">${i.quantity}</td>
+      <td style="text-align:right">₹${i.unit_price.toFixed(2)}</td>
+      <td style="text-align:right">₹${i.total.toFixed(2)}</td>
+    </tr>`).join('');
+  const win = window.open('', '_blank');
+  win.document.write(`
+    <html><head><title>Invoice ${inv.invoice_no}</title>
+    <style>
+      body{font-family:Arial,sans-serif;padding:30px;max-width:700px;margin:auto;font-size:13px}
+      h2{margin:0;font-size:18px} .sub{color:#666;font-size:12px;margin-top:2px}
+      table{width:100%;border-collapse:collapse;margin:14px 0}
+      th{background:#f5f5f5;padding:8px;text-align:left;border-bottom:2px solid #ddd;font-size:12px}
+      td{padding:7px 8px;border-bottom:1px solid #eee}
+      .total-row{font-weight:700;font-size:14px}
+      .badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600}
+      .paid{background:#dcfce7;color:#16a34a} .pending{background:#fef9c3;color:#854d0e}
+      .header{display:flex;justify-content:space-between;margin-bottom:20px;padding-bottom:14px;border-bottom:2px solid #eee}
+      .footer{margin-top:30px;padding-top:12px;border-top:1px solid #eee;font-size:11px;color:#888;text-align:center}
+      @media print{button{display:none}}
+    </style></head><body>
+    <div class="header">
+      <div><h2>${h.name||'MediCore Hospital'}</h2><div class="sub">${h.address||''}</div><div class="sub">${h.phone||''}</div></div>
+      <div style="text-align:right"><div style="font-size:11px;color:#888">Invoice No.</div><div style="font-weight:700;font-family:monospace;font-size:15px">${inv.invoice_no}</div><div style="font-size:11px;color:#888;margin-top:4px">${inv.date}</div></div>
+    </div>
+    <div style="margin-bottom:16px"><div style="font-weight:600;font-size:14px">${inv.patient}</div><div style="font-size:12px;color:#666">UHID: ${inv.uhid} &nbsp;·&nbsp; ${inv.phone||''}</div></div>
+    <table>
+      <thead><tr><th>Description</th><th style="text-align:center">Qty</th><th style="text-align:right">Unit Price</th><th style="text-align:right">Total</th></tr></thead>
+      <tbody>${itemsHtml}</tbody>
+    </table>
+    <div style="display:flex;justify-content:flex-end">
+      <div style="min-width:220px">
+        <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #eee"><span>Subtotal</span><span>₹${inv.subtotal.toFixed(2)}</span></div>
+        ${inv.discount_pct>0?`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #eee;color:#0f9e75"><span>Discount (${inv.discount_pct}%)</span><span>-₹${inv.discount_amt.toFixed(2)}</span></div>`:''}
+        <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #eee"><span>GST (${inv.gst_pct}%)</span><span>₹${inv.gst_amount.toFixed(2)}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;font-weight:700;font-size:15px"><span>Total</span><span>₹${inv.total.toFixed(2)}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:5px 0;color:#0f9e75"><span>Paid</span><span>₹${inv.paid.toFixed(2)}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:5px 0;font-weight:600"><span>Balance</span><span>₹${inv.balance.toFixed(2)}</span></div>
+      </div>
+    </div>
+    <div style="margin-top:16px">Status: <span class="badge ${inv.status==='paid'?'paid':'pending'}">${inv.status.toUpperCase()}</span></div>
+    <div class="footer">Thank you for choosing ${h.name||'MediCore Hospital'} · This is a computer generated invoice</div>
+    <div style="text-align:center;margin-top:16px"><button onclick="window.print()" style="padding:8px 24px;background:#1a6fc4;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px">🖨 Print</button></div>
+    </body></html>`);
+  win.document.close();
+}
+
+async function downloadInvoicePDF(invId) {
+  // Open print window - user can Save as PDF from print dialog
+  await printInvoice(invId);
+  setTimeout(() => {
+    const wins = window.open('', '_blank');
+    if (wins) wins.print();
+  }, 500);
 }
 
 // ── Helpers ───────────────────────────────────────────────────

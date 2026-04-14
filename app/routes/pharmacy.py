@@ -1,7 +1,7 @@
 """
 MediCore HMS — Pharmacy Routes
 """
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, current_app
 from flask_login import login_required, current_user
 from functools import wraps
 from datetime import datetime, date, timedelta
@@ -63,28 +63,38 @@ def api_prescriptions():
         Prescription.created_at.desc()).limit(50).all()
     result = []
     for rx in rxs:
-        p   = Patient.query.get(rx.patient_id)
-        doc = Doctor.query.get(rx.doctor_id)
-        items = PrescriptionItem.query.filter_by(prescription_id=rx.id).all()
-        result.append({
-            'id':              rx.id,
-            'prescription_no': rx.prescription_no,
-            'patient_name':    p.full_name if p else '?',
-            'patient_uhid':    p.uhid if p else '?',
-            'doctor_name':     doc.full_name if doc else '?',
-            'status':          rx.status,
-            'created_at':      rx.created_at.strftime('%d %b %Y %H:%M'),
-            'notes':           rx.notes or '',
-            'item_count':      items.count() if hasattr(items, 'count') else len(items),
-            'items': [{
-                'drug_id':   i.drug_id,
-                'drug_name': Drug.query.get(i.drug_id).name if Drug.query.get(i.drug_id) else '?',
-                'dosage':    i.dosage, 'frequency': i.frequency,
-                'duration':  i.duration, 'quantity': i.quantity,
-                'instructions': i.instructions or '',
-                'is_dispensed': i.is_dispensed,
-            } for i in items],
-        })
+        try:
+            p   = Patient.query.get(rx.patient_id)
+            doc = Doctor.query.get(rx.doctor_id)
+            items = PrescriptionItem.query.filter_by(prescription_id=rx.id).all()
+            items_data = []
+            for i in items:
+                drug = Drug.query.get(i.drug_id)
+                items_data.append({
+                    'drug_id':      i.drug_id,
+                    'drug_name':    drug.name if drug else '?',
+                    'dosage':       i.dosage or '',
+                    'frequency':    i.frequency or '',
+                    'duration':     i.duration or '',
+                    'quantity':     i.quantity or 0,
+                    'instructions': i.instructions or '',
+                    'is_dispensed': i.is_dispensed,
+                })
+            result.append({
+                'id':              rx.id,
+                'prescription_no': rx.prescription_no or f'RX-{rx.id}',
+                'patient_name':    p.full_name if p else '?',
+                'patient_uhid':    p.uhid if p else '?',
+                'doctor_name':     doc.full_name if doc else '?',
+                'status':          rx.status,
+                'created_at':      rx.created_at.strftime('%d %b %Y %H:%M') if rx.created_at else '',
+                'notes':           rx.notes or '',
+                'item_count':      len(items_data),
+                'items':           items_data,
+            })
+        except Exception as e:
+            current_app.logger.error(f'Error processing prescription {rx.id}: {e}')
+            continue
     return jsonify({'success': True, 'prescriptions': result})
 
 
